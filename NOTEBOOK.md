@@ -599,13 +599,13 @@ Heap (управляемая куча) - для переменных с неоп
 (`View` - все, что связано с представлением данных, интерфейс  
 `Controller` - логика приложения  
 `Model` - хранит модели данных (классы, объекты))  
-![Model-View-Controller](/NOTEBOOK/ModelViewController.png)
+![ModelViewController](ModelViewController.png)
 
 2. Шаблон MVP (Model-View-Presenter) - в этом паттерне модель и представление разделены, а вместо контроллера используется презентер (presenter). Презентер обрабатывает данные, полученные от модели, и передает их на представление, которое отображает информацию пользователю.
-![ModelViewPresenter](/NOTEBOOK/Model-View-Presenter.png)
+![ModelViewPresenter](ModelViewPresenter.png)
 
 3. Шаблон MVVM (Model-View-ViewModel) - это вариант паттерна MVP, где вместо презентера используется ViewModel. ViewModel обрабатывает данные и передает их модели и представлению
-![ModelViewViewModel](/NOTEBOOK/Model-View-ViewModel.png)
+![ModelViewViewModel](ModelViewViewModel.png)
 
 4. Шаблон Singleton - этот шаблон позволяет создавать только один экземпляр определенного класса в приложении. Это может быть полезно для сохранения состояния приложения или для доступа к общим ресурсам.
 
