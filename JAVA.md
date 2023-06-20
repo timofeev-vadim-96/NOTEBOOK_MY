@@ -1084,6 +1084,43 @@ User user = repository.findById(id).orElseThrow(()->new RuntimeException("User n
 
 * Цикл **while(true)** - чтобы выйти из него - return, а в конце каждого условия - break
 
+* Когда мы не сразу инициализируем переменную, а делаем это в конструкторе - инъекция (injection)  
+private final Square square;
+
+    public Painter(Square square) {
+        this.square = square;
+    }
+
+
+**Logger (logger):**   
+
+package logger; // в пакете
+
+import java.io.FileInputStream;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+public class Log {
+    static {
+        try(FileInputStream in = new FileInputStream("log.config")){ //сокр путь до файла с конфигами (из семинара 6 по ООП с Александром Леонидовым)  
+            LogManager.getLogManager().readConfiguration(in);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static Logger log(String className) {
+        return Logger.getLogger(className);
+    }
+}
+
+(Чтобы инициализировать Логгер в классе мейн: )  
+private static final Logger log = Log.log(Main.class.getName());
+в psvm main:  
+log.log(Level.INFO, "Стартовал метод main в пакете model");
+
+* В Java есть два потока вывода: System.out and System.err(текст выделен красным цветом)  
+
 ---
 **Полезные ссылки:**  
 1. канал для изучения JAVA - https://www.youtube.com/channel/UCK5d3n3kfkzlArMccS0TTXA
