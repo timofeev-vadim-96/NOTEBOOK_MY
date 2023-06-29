@@ -909,6 +909,8 @@ public class Worker implements Iterator<String>...
                 return String.format("Salary: %s", salary);  
         }  
     }  
+    
+
 В **мейне напрямую объявляем**:  
 Iterator<String> components = worker1; 
 
@@ -1118,6 +1120,25 @@ public class Log {
 private static final Logger log = Log.log(Main.class.getName());
 в psvm main:  
 log.log(Level.INFO, "Стартовал метод main в пакете model");
+
+
+* **Чтобы заменить свичКейс (switch case) мапой**:  
+    private static final Map<Operation, BinaryOperator<Integer>> operationMap = new HashMap<>();  
+
+    public static void main(String[] args) {  
+        fillMap();  
+        System.out.println(calculateWithMap(Operation.SUM, 3,5));  
+    }  
+
+
+    private static void fillMap(){  
+        operationMap.put(Operation.SUM, Integer::sum);   
+        operationMap.put(Operation.DIFF, (a,b)->a-b);   
+    }  
+
+    private static int calculateWithMap(Operation operation, int a, int b){  
+        return operationMap.get(operation).apply(a,b);  
+    }  
 
 * В Java есть два потока вывода: System.out and System.err(текст выделен красным цветом)  
 
