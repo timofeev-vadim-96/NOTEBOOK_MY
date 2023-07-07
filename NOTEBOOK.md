@@ -1543,6 +1543,7 @@ HashCode - ссылка на объект в памяти
 8. Ютуб по Java - Alishev  
 9. Статья по дженерикам - https://javarush.com/groups/posts/2004-teorija-dzhenerikov-v-java-ili-gde-na-praktike-stavitjh-skobki  
 10. Javarush - Канал по джаве на Ютуб, простым языком  
+11. Конвертер PDF: https://www.ilovepdf.com/ru
 
  
 
