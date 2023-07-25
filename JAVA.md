@@ -300,6 +300,13 @@ String pathFile = pathProject.concat("/file.txt"); //получить путь �
 File f3 = new File(pathFile);  //создать новый файл  
 System.out.println(f3.getAbsolutePath ());  //здесь очевидно абсолютный путь к файлу
 
+`ПРИМЕР ДЛЯ ЗАПИСИ В ФАЙЛ: ` 
+public void add(String text) throws IOException {  
+        Writer logsWriter = new FileWriter(dataBase, true);  
+        logsWriter.write(text);  
+        logsWriter.close();  
+    }  
+
 Основные ошибки при работе с файлами:  
 1. Неправильный путь;  
 2. Отсутствие какой-либо папки;  
