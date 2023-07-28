@@ -1,4 +1,5 @@
-# JAVA - кроссплатформенный язык с обратной совместимостью всех версий   
+# JAVA - кроссплатформенный язык с обратной совместимостью всех версий  
+
 Преподаватель:
   * (лекции) - Сергей Камянецкий  
   * (семинары) - Александр Леонидов  
@@ -142,6 +143,10 @@ public static String getType(Object o) {
 
 * Чтобы **скопировать массив**:  
 System.arraycopy(temp,0, values,0, temp.length);  temp - откуда, 0 - c какого элемента копируем, values - куда копируем, 0 - начиная на какую позицию копируем, temp.lenght - сколько всего элементов копируем(указываем длину массива, из которого копируем)  
+
+* Скопировать список:  
+notes.addAll(notesFromJson);  
+
 
 * Чтобы объявить думерный массив:  
     * int [] arr [] = new int [3] [5];  
@@ -289,6 +294,13 @@ public VetClinic addPet(Animal animal){
 3. animals.forEach(Animal::speak); //тоже самое, что animals.forEach(a -> a.speak());  
 
 **Работа с файлами:**  
+`Создать пустой файл:`
+```java
+File file = new File("myfile.txt"); // создаем объект File для файла myfile.txt
+if (!file.exists()) { // проверяем, существует ли файл
+file.createNewFile(); // если нет, создаем новый файл
+}
+
 Для работы нужно:  
 import java.io.File;  //библиотека для работы с файлами.
 File <имя> = new File(<полный путь к файлу>);
@@ -299,6 +311,33 @@ String pathProject = System.getProperty("user.dir") //предполагаю, ч
 String pathFile = pathProject.concat("/file.txt"); //получить путь к файлу  
 File f3 = new File(pathFile);  //создать новый файл  
 System.out.println(f3.getAbsolutePath ());  //здесь очевидно абсолютный путь к файлу
+
+`ПРИМЕР СЧИТЫВАНИЯ С ФАЙЛА ПОСТРОЧНО В СПИСОК СТРОК`
+
+Для считывания файла построчно в Java можно использовать класс `BufferedReader`. Вот пример кода:
+```java
+import java.io.*;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+public class FileReader {
+public static void main(String[] args) throws IOException {
+File file = new File("file.txt");
+List<String> lines = new ArrayList<>();
+BufferedReader reader = new BufferedReader(new FileReader(file));
+String line;
+while ((line = reader.readLine()) != null) {
+lines.add(line);
+}
+reader.close();
+for (String line : lines) {
+System.out.println(line);
+}
+}
+}
+```
+В этом примере мы создаем объект `FileReader`, который открывает файл "file.txt" в режиме чтения построчно. Затем мы создаем список строк `lines` и используем `BufferedReader` для чтения каждой строки из файла. При чтении каждой строки мы добавляем ее в список `lines`.
+После завершения чтения мы закрываем `BufferedReader`, а затем выводим каждую строку из списка `lines` на экран.
 
 `ПРИМЕР ДЛЯ ЗАПИСИ В ФАЙЛ: ` 
 public void add(String text) throws IOException {  
@@ -536,6 +575,33 @@ double a = arr.stream().mapToDouble(Integer::doubleValue).average().orElse(Doubl
 чтобы импортировать библиотеку: в проекте Gradle в файл build.gradle в *Dependensies* добавить ссылку на нужную библиотеку  
 Пример: (lambok gradle dependency)   compileOnly 'org.projectlombok:lombok:1.18.26'  
 Когда ламбок подключен - сверху класса аннтоацию @Data or @Getter @Setter, для замены геттеров и сеттеров    
+
+`Сюрреализация объект в json-формат и запись в файл.json`: 
+Для записи объекта (класса с полями) в JSON-формате в файл на Java, вы можете использовать библиотеку Gson.
+Вот пример кода для записи объекта в файл:
+```
+import com.google.gson.Gson;
+
+MyObject obj = new MyObject(1, "John");
+Gson gson = new Gson();
+String json = gson.toJson(obj);
+try (FileWriter writer = new FileWriter("object.json")) {
+writer.write(json);
+} catch (IOException e) {
+e.printStackTrace();
+}
+
+
+`Дессюриелазиация json в объект:`  
+public Note jsonToObj(String json) {
+        return gson.fromJson(json, Note.class);
+    }
+
+
+```
+В этом примере мы создаем класс `MyObject`, который имеет два поля: `id` и `name`. Затем мы создаем экземпляр этого объекта, используя конструктор с параметрами. Затем мы используем библиотеку Gson для преобразования объекта в строку в формате JSON.
+Затем мы открываем файл "object.json" для записи строки в формате JSON в него. Если возникает исключение `IOException`, оно будет перехвачено и напечатано.
+
 
 **Hotkeys/хоткеи**:  
 * **Форматирование автоматическое:**  
@@ -1148,6 +1214,16 @@ log.log(Level.INFO, "Стартовал метод main в пакете model");
     }  
 
 * В Java есть два потока вывода: System.out and System.err(текст выделен красным цветом)  
+
+`Строка в список`  
+List<String> myList = new ArrayList<String>(Arrays.asList(s.split(",")));  
+
+`Как подключить удаленную библиотеку в проекту Java?`  
+Project Structure -> Platform Settings -> Global Libraries -> название библиотеки типа com.google.code.gson 
+
+`Date/Дата и время`  
+Date now = new Date();
+System.out.println(new SimpleDateFormat("dd.MM.yyyy.HH.mm").format(now));
 
 ---
 **Полезные ссылки:**  
