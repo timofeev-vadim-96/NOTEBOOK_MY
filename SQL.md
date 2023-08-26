@@ -39,12 +39,27 @@ like - содержит в себе
 * Вместо ON можно использовать USING, но столбцы в USING должны быть одинаковые в обеих таблицах. USING (name)
 
 * Inner Join - покажет все элементы, где есть соответствие между таблицами
-Пример через третью таблицу:  
+Пример через три / третью таблицу:  
 select f.Name, f.description, g.name 
 from films as f
 inner join film_genre as fg //3 таблица
 on f.id = fg.id_film
 inner join genres as g
+on fg.id_genre = g.id;
+
+**Пример через три табл с помощь UNION как FULL JOIN:**
+select f.Name, f.description, g.name
+from films as f
+left join film_genre as fg
+on f.id = fg.id_film
+left join genres as g
+on fg.id_genre = g.id
+union
+select f.Name, f.description, g.name
+from films as f
+right join film_genre as fg
+on f.id = fg.id_film
+right join genres as g
 on fg.id_genre = g.id;
 
 * Left OUTER Join - покажет все элементы левой таблицы + элементы правой таблицы, которые соответствуют элементам левой таблицы
@@ -385,7 +400,7 @@ SELECT ... FROM table WHERE ... GROUP BY... HAVING ... ORDER BY ...
 * MIN: вычисляет наименьшее значение  
 * MAX: вычисляет наибольшее значение  
   * select min(price) as min, max(price) as max from phones;
-* COUNT: вычисляет количество строк в запросе 
+* COUNT: вычисляет количество строк в запросе (значения NULL не учитываются)
   * select count(*) from phones; //вывести общее кол-во строк в таблице 
   * select manufacturer, count(*) as modelsCount from phones group by manufacturer; //выведет производителей с количеством строк относительно каждого
   * select count(distinct name) as count_unique from emp; //количество уникальных значений в столбце
@@ -446,3 +461,122 @@ select version ();
 
 * Посчитать количество записей в возвращенном запросе  
   * select count(*) from (select * from users union select * from clients order by id) as x;
+
+---
+
+> `Оконные функции`
+
+**Синтаксис оконной функции**
+SELECT
+тело функции
+OVER
+  (PARTITION BY столбец для группировки)
+  ORDER BY столбец для сортировки
+  ROWS или RANGE выражение для ограничения строк в пределах группы
+)
+
+**Оператор OVER** отличается от функции аггрегации Group by тем, что при использовании оконных функций количество строк в запросе не уменьшается по сравнении с исходной таблицей.
+  Пример: если мы хотим получить сумму по 1 из столбцов, эта сумма будет отображаться для каждой строки
+  * select model, manufacturer, quantity, price, sum(quantity) over (partition by manufacturer order by quantity) totalQuantity from phones; //в каждой строке общая сумма, группируем с помощью `partition by`, сортируем по какому-то критерию (при этом общая сумма будет как бы по нарастанию)
+
+`Партиции` - набор из 1 и более столбцов, по которым производится выборка с помощью partition
+
+ROWS и RANGE //для оператора OVER
+UNBOUNDED PRECEDING — указывает, что окно начинается с первой строки группы;
+UNBOUNDED FOLLOWING – с помощью данной инструкции можно указать, что окно заканчивается на последней строке группы;
+CURRENT ROW – инструкция указывает, что окно начинается или заканчивается на текущей строке;
+BETWEEN «граница окна» AND «граница окна» — указывает нижнюю и верхнюю границу окна;
+«Значение» PRECEDING – определяет число строк перед текущей строкой (**не допускается в предложении RANGE**).;
+«Значение» FOLLOWING — определяет число строк после текущей строки (**не допускается в предложении RANGE**).
+Пример
+select model, manufacturer, quantity, price, sum(quantity) 
+over (partition by manufacturer order by quantity rows between current row and 1 following) totalQuantity 
+from phones; //в каждой строке сумма текущего значения и следующего, группируем с помощью `partition by`, сортируем по какому-то критерию (при этом общая сумма будет как бы по нарастанию)
+
+`Оконные функции:` (доступены в MySql с версии 8.0)
+1. Аггрегатные функции //уже изучили
+  * sum()
+  * max()
+  * min()
+  * avg()
+  * count()
+2. **Функции ранжирования**
+  * ROW_NUMBER – функция возвращает номер строки и используется для нумерации;
+  * RANK — функция возвращает ранг каждой строки. Ранг определяется относительно значения строки по определенному столбцу. КРЧ, если, например, значения цены одинаковые - ранг будет одинаковый.  Но! с пропуском следующего значения. Это значит, что если у следующей строки значение будет отличаться, то она будет уже рангом не 1, а 3;
+  * DENSE_RANK — функция возвращает ранг каждой строки. Но в отличие от функции RANK, она для одинаковых значений
+  возвращает ранг, не пропуская следующий; Это значит, что у первых двух одинаковых строк будет ранг 1, а у третей 2
+  * NTILE – это функция, которая позволяет определить к какой группе относится текущая строка. Количество групп задается в
+  скобках //В случае, когда число строк не делится нацело на число групп, функция NTILE помещает в последние группы на одну строку меньше, чем в первые.
+    * распределение по группам происходит на основании order by. Количество элементов списка делится на кол-во групп. Берем N элементов и помещаем в 1 группу и т.д.
+3. **Функции смещения**
+  * first_value() //крч первое значение в окне по столбцу
+    * select model, manufacturer, quantity, price, 
+    first_value(price) over (partition by manufacturer order by manufacturer) as f_v from phones;
+  * last_value(столбец) //крч крайнее значение в столбце
+  * lag() //крч предыдущее значение в столбце
+  * lead() //крч следующее значение в столбце
+  * nth_value(столбец, N строки) //крч вернет конкретную строку по ее номеру в каждом окне (группе)
+    * select model, manufacturer, quantity, price, 
+    nth_value(model, 2) over (partition by manufacturer order by price RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as cheapest
+from phones;
+Пример использования **агрегатной функции + оконная**
+select model, manufacturer, quantity, price, 
+sum(quantity) over (partition by manufacturer) as totalQuantity,
+count(quantity) over (partition by manufacturer) as count,
+max(quantity) over (partition by manufacturer) as max,
+min(quantity) over (partition by manufacturer) as min,
+avg(quantity) over (partition by manufacturer) as avg
+from phones;
+
+Пример, демонстрирующий работу **ранжирующих функций**
+select model, manufacturer, quantity, price, 
+row_number() over (partition by manufacturer order by quantity) as quan,
+rank() over (partition by manufacturer order by quantity) as rnk,
+dense_rank() over (partition by manufacturer order by quantity) as d_rank,
+ntile(3) over (partition by manufacturer order by quantity) as n_tile
+from phones;
+
+`Функции смещения`
+**LAG или LEAD** – функция LAG обращается к данным из
+предыдущей строки окна, а LEAD к данным из следующей строки.
+Функцию можно использовать для того, чтобы сравнивать
+текущее значение строки с предыдущим или следующим. Имеет
+три параметра: столбец, значение которого необходимо вернуть,
+количество строк для смещения (по умолчанию 1), значение,
+которое необходимо вернуть если после смещения возвращается
+значение NULL;
+**FIRST_VALUE или LAST_VALUE** — с помощью функции можно
+получить первое и последнее значение в окне. В качестве
+параметра принимает столбец, значение которого необходимо
+вернуть.
+
+`Представления` - являются виртуальной копией таблицы (результатом запроса)
+
+**Синтаксис представления** 
+create or repleace view view_name as alias_name //где "or replace" не обяз, однако если такое представление существует - вернется ошибка
+select columns
+from tables
+where conditions; //where - необязательная часть
+
+**Пример**: 
+create view apple_market as
+select * from phones 
+where manufacturer = 'apple';
+
+**Создание view через join:**
+create view view1 as
+select f.Name as film_name, f.description, g.name
+from films as f
+inner join film_genre as fg
+on f.id = fg.id_film
+inner join genres as g
+on fg.id_genre = g.id
+and g.name = 'adventure';
+
+**Операции с представлениями** = удаление (через DROP VIEW) и объединение (через Join), изменение (через Alter view)
+  * изменение
+    * alter view apple_market as select model, manufacturer, price from phones; //просто выбрал меньше столбцов
+
+`DT (derived tables) ` Производные таблицы
+`CTE (common table expressions)` Обобщенные табличные выражения
+---
