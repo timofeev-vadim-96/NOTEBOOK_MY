@@ -35,7 +35,8 @@ psvm - public static void main;
 
 Чтобы запустить скомпиллировать файл:
   * кнопка
-  * в консоль: java filename.java  
+  * в консоль: java filename.java 
+  * Shift + F10 
 
 Многострочный комментарий (документация Java):  
 /**
@@ -502,9 +503,16 @@ Collections.sort(list);
   wList.sort((w1, w2) -> Integer.compare(w1.age, w2.age)); // но поле "age" должно быть public  
 
 
-* Чтобы засечь время:  
+* `Чтобы засечь/сравнить время выполнения`:  
+1. Вариант
 long startTime = System.currentTimeMillis();  
 System.out.println(System.currentTimeMillis()-startTime);  
+2. Вариант
+Date start1 = new Date();
+...функция...
+Date end1 = new Date();
+long time1 = end1.getTime() - start1.getTime();
+System.out.println(time1);
 
 * Чтобы удалить элемент списка:  
 resList.remove(0);  
@@ -1224,6 +1232,9 @@ Project Structure -> Platform Settings -> Global Libraries -> название �
 `Date/Дата и время`  
 Date now = new Date();
 System.out.println(new SimpleDateFormat("dd.MM.yyyy.HH.mm").format(now));
+
+**Мутабельный класс - AtomicInteger**
+AtomicInteger counter.increment... //крч для счетчика, целесообразно передавать в рекурсию для подсчета шагов
 
 ---
 **Полезные ссылки:**  

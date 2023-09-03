@@ -278,6 +278,9 @@ XMLFormatter, SimpleFormatter
 
 **Регулярное выражение** (сокращенное как regex или regexp; также называется рациональным выражением) - это последовательность символов, определяющая шаблон поиска. Обычно такие шаблоны используются алгоритмами поиска строк для операций "найти" или "найти и заменить" над строкамиили для проверки входных данных.
 
+`ЛОГАРИФМ`
+loga(b) = c, это значит, что a^c = b
+
 --> Конец теории
 
 ---
@@ -1481,6 +1484,7 @@ HashCode - ссылка на объект в памяти
 2. Рекомендации по разработке фреймворка .NET - https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/
 3. Классификаторы для распознования по видеокамере или видео:  https://github.com/opencv/opencv/tree/4.x/data/haarcascades  
 4. Тренировка навыков, решение задач, подготовка к собезам: https://leetcode.com/timofeev-vadim-96/  
+  * https://leetcode.com/discuss/general-discussion/460599/blind-75-leetcode-questions //список задач по темам
 5. Решение задач: https://www.hackerrank.com/  
 6. Решение задач: https://www.codewars.com/  
 7. Ютуб по Python - Django School  

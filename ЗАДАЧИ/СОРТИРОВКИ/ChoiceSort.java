@@ -1,0 +1,40 @@
+//СОРТИРОВКА ВЫБОРОМ. Суть в том, что на каждой итерации мы ищем мин элемент. Затем, первый элемент в массиве
+//меняем местами с минимальным и смещаемся на один в права, т.к. 1й элемент гарантированно минимальный.
+import java.util.Arrays;
+import java.util.Random;
+
+public class ChoiceSort {
+    public static void main(String[] args) {
+        int [] newArray = createArray(10, 1, 100);
+        System.out.println(Arrays.toString(newArray));
+        choiceSort(newArray);
+        System.out.println(Arrays.toString(newArray));
+    }
+
+    //Сложность O(n^2)
+    public static void choiceSort(int [] inputArray){
+        int size = inputArray.length;
+        int minElemPos;
+        int tempValue;
+        for (int i = 0; i < size; i++) {
+            minElemPos = i; //с каждой итерацией устанавливаем по умолчанию мин элемент i
+            for (int j = i+1; j < size; j++) {
+                if (inputArray[j] < inputArray[minElemPos]) minElemPos = j;
+            }
+            if (i != minElemPos){ //если это не изначальный элемент то:
+                tempValue = inputArray[i];
+                inputArray[i] = inputArray[minElemPos];
+                inputArray[minElemPos] = tempValue;
+            }
+        }
+    }
+
+    public static int [] createArray(int size, int leftBoarder, int rightBoarder){
+        Random random = new Random();
+        int [] newArray = new int[size];
+        for (int i = 0; i < size; i++) {
+            newArray[i] = random.nextInt(leftBoarder, rightBoarder+1);
+        }
+        return newArray;
+    }
+}
