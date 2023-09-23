@@ -1,3 +1,4 @@
+package СТРУКТУРЫ;
 
 public class LinkedList1 {
     Node head;
@@ -20,6 +21,18 @@ public class LinkedList1 {
             head = head.next;
         }
         return result;
+    }
+
+    public void reverse() { //разворот циклом
+        Node previous = null;
+        Node current = head;
+        while (current != null) {
+            Node nextElement = current.next;
+            current.next = previous;
+            previous = current;
+            current = nextElement;
+        }
+        head = previous;
     }
 
     public void revert(Node currentNode, Node previousNode){ //для разворота связного списка

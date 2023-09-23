@@ -1,3 +1,4 @@
+package СТРУКТУРЫ;
 //Двусвязный список
 public class LinkedList2 {
     Node head;
@@ -16,6 +17,26 @@ public class LinkedList2 {
             tail = node;
         }
         return this;
+    }
+
+    //Сортировка связанного списка с помощью пузырька (самый удобный за счет особенностей структуры данных)
+    public void sort(){
+        if (head == null) return;
+        Node currentNode = head;
+        boolean flag;
+        do{
+            flag = false;
+            currentNode = head;
+            while (currentNode.next != null) {
+                if (currentNode.value > currentNode.next.value) {
+                    int tempValue = currentNode.value;
+                    currentNode.value = currentNode.next.value;
+                    currentNode.next.value = tempValue;
+                    flag = true;
+                }
+                currentNode = currentNode.next;
+            }
+        } while(flag); //если ни одна пара не менялась местами за проходку, то список отсортирован
     }
 
     public void delete (Node node){
