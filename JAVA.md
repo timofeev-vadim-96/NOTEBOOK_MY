@@ -1387,8 +1387,115 @@ String DATA_REGEX = "(0[1-9]|[12][0-9]|3[01])[.](0[1-9]|1[0-2])[.](19[0-9][0-9]|
 private static int counter = 0;  
 и увеличивать его либо в конструкторе, либо в методе add() и др.
 
+* Запуск jar файла из терминала
+java -jar -Dfile.encoding=UTF-8 myapp.jar
+
+---
+
+Решение ошибки с отсутствием mainclass в манифесте:
+засунуть в зависимости pom.xlm после properties...
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+И проделать следующее:
+
+For newer versions of IntelliJ, enable the use plugin registry option within the Maven settings as follows:
+
+Click File 🡒 Settings.
+Expand Build, Execution, Deployment 🡒 Build Tools 🡒 Maven.
+Check Use plugin registry.
+Click OK or Apply.
+For IntelliJ 14.0.1, open the preferences---not settings---to find the plugin registry option:
+
+Click File 🡒 Preferences.
+Regardless of version, also invalidate the caches:
+
+Click File 🡒 Invalidate Caches / Restart.
+Click Invalidate and Restart.
+When IntelliJ starts again the problem should be vanquished.
+
+---
+
+* Чтобы собрать проект более старой версии: изменить номер в этом участке pom.xml (maven)  
+    <properties>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    </properties>
+
+* Чтобы изменить версию компилляции кода в java-проектах
+настройки - compiler - java compiler - project bytecode version
+
+* Чтобы изменить используемую версию java
+свойства компьютера - расширенные настройки внизу - доп - параметры среды - путь к папке c/program files/java...19/bin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 **Полезные ссылки:**  
 1. канал для изучения JAVA - https://www.youtube.com/channel/UCK5d3n3kfkzlArMccS0TTXA
-2. статья о LinkedList - https://habr.com/ru/articles/337558/  
+2. статья о LinkedList - https://habr.com/ru/articles/337558/ 
 
+> как собрать проект с зависимостями в Intelliage Idea 
+https://yandex.ru/video/preview/5410863555101948769
+
+> как изменить тип проекта из обычного в Maven
+https://skillbox.ru/media/base/kak-iz-obychnogo-ideaproekta-sdelat-maven/

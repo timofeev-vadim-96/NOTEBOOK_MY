@@ -157,6 +157,7 @@ p.s. Для Mac M1,M2... (M)  не сработает
 * whoami - покажет текущего пользователя
 * ls -l /proc/$$/ns - вывести все действующие пространства имен
   * lsns - вообще все пространства имен
+* apt-get install net-tools //для установки утилиты ip, ifconfig - для работы с сетью
 
 `Commands for working with files`  //команды для работы с файлами
 
@@ -1014,7 +1015,7 @@ HTTP - ответ состоит:
 **Настройка конфигурации NGINX**  
 ● Установка: sudo apt install nginx
 1. Тестирование конфигурации: sudo nginx -t //после любого редактирования основного файла
-2. Применить новые конфиги: sudo systemctl reload nginx //без перезагрузки
+2. Применить новые конфиги: sudo systemctl reload nginx //без перезагрузки OC
 ● Конфигурация: /etc/nginx/*
   * modules-available - конфиги сайтов
   * modules-enabled - символические ссылки на сайты (для возможности их оперативного отключения, просто удаляется ссылка)
@@ -1051,6 +1052,7 @@ try_files $uri $uri/ =404;  //1uri - поиск по адресу, 2uri - пои
 + ps afx (2 крайних процесса)  
 + ss -ntlp (2 сокета - под IPv4/IPv6)  
 + curl localhost //проверка локальной работы
+
 
 `Веб-сервер Apache` актуальная версия 2.4 (на 16.07)  //в CamelCase  
 ● Популярный веб-сервер
@@ -1242,10 +1244,10 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
 `Запуск тестового контейнера`
 ● Установка Docker: apt install docker.io
 ● Проверка: sudo docker
-● Создание и запуск контейнера: docker run hello-world //run - создание+запуск контейнера (2в1)
+● Создать контейнер/запустить контейнер: docker run hello-world //run - создание+запуск контейнера (2в1)
   * если не указывает тег версии образа - по умолчанию тег: latest
 
-**Команды Docker:**  
+**Команды Докера/Docker:**  
 * запуск уже установленных контейнеров: docker start name
 * docker ps - список активных контейнеров
   * docker ps -a - все контейнеры //столбец name генерирует имя рандомно
@@ -1255,13 +1257,13 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
 ● docker pull nginx – скачивание образа. Если уже был образ, но более старой версии - он обновится на latest. 
   * docker pull ubuntu - по дефолту latest
   * docker pull ubuntu:18.04 //с использованием тега
-* docker run -it ubuntu bash//-it - интерактивный режим - запускаем и входим в него (то есть не в  фоновом режиме), bash - оболочка - то есть проваливаемся внутрь контейнера
+* docker run -it ubuntu bash//-i - интерактивный режим, t - терминал = запускаем и входим в него (то есть не в  фоновом режиме), bash - оболочка - то есть проваливаемся внутрь контейнера
   * добавить --name name //именованный контейнер
   * будет запущен до того момента, пока что-то делает. Можно добавить "sleep 60" - будет активен в течении 60 сек после запуска
 ● docker start|restart|stop nginx – операции с контейнером, которые работают в режиме демона
 ● docker rm 9cbf7c3230d0 – удаление контейнера
   * указываем либо id, либо имя 
-  * docker rm \$(docker ps -aq) //удалить все контейнеры
+  * docker rm \$(docker ps -aq) --force//удалить все контейнеры (без слэша), --force - для удаления запущенных
 ● docker rmi hello-world – удаление образа
   * dockdr rmi ubuntu:18.04 // с тегом
 ● docker logs nginx1 – просмотр логов контейнера
@@ -1289,14 +1291,16 @@ VirtualBox. //обращение напрямую к сокетам (так же
 * Docker volume (том Docker) /var/lib/docker/volumes/xxxxx -> /var/nginx/ (Контейнер Nginx)
 
 **Запуск Nginx – проброс портов и директории**
+* sudo systemctl start/enable nginx //запуск и остановка в основной системе
 ● Команда создания и запуска: docker run -d --restart always --name nginx1 \
--p 80:80 -v /var/www/html:/usr/share/nginx/html nginx
+-p 8081:80 -v /var/www/html:/usr/share/nginx/html nginx
   * -d - в режиме демона
   * --restart always - перезапускать всегда вместе с системой
   * nginx1 - новое имя контейнера
-  * -p 80:80 - проброс портов для работы в режиме "Bridge" (первая цифра - порт на хостовой системе, вторая - внутри контейнера)
-  * -v /var/www/html:/usr/share/nginx/html - подключение локальной директории к внутренней директории контейнера
+  * -p 8081:80 - проброс портов для работы в режиме "Bridge" (первая цифра - порт на хостовой системе, вторая - внутри контейнера)
+  * -v /var/www/html:/usr/share/nginx/html - подключение локальной директории к внутренней директории контейнера (сначала на хостовой ОС, затем в контейнере) //общая папка
   * nginx - образ iso nginx, который нашли и запулили (pull) через поиск
+  - h newHostName //задает имя хоста внутри контейнера
 * Запуск контейнера с туториалом: docker run -d -p 9180:80 docker/getting-started
 ● Учитываем порты на хосте (ss -ntlp)
 ● Монтируем директории
@@ -1362,4 +1366,187 @@ services:
 
 **WordPress** — бесплатная система управления контентом (CMS) с открытым исходным кодом, которая опирается на базу данных MySQL и обрабатывает запросы с помощью PHP.
 
+**Maria Data Base**
+создать:
+* sudo docker run --name MASHA -e MARIADB_ROOT_PASSWORD=lokation -v /any_folder:/var/lib/mysql -d mariadb:11.1.2
+  * -e MARIADB_ROOT_PASSWORD=lokation //переменная среды, в которой хранится пароль (пароли на базы данных всегда хранятся в переменных среды)
+  * -v ... 1 - папка хоста, 2 - папка внутри контейнера //что даст подключение общей папки? при удалении контейнера все созданные БД будут сохранены в хостовой системе по указанному пути
+зайти:
+docker exec -it MASHA bash
+mariadb -u root -p
+далее ввод пароля...
+lokation
+смотрим базы данных:
+show databases;
+* `phpmyadmin` для вывода инфы с баз данных mariaDB
+sudo docker run -d --name phpmyadmin_for_maria --link MASHA:db -p 8123:80 phpmyadmin/phpmyadmin
+* --link MASHA:db - связывает контейнер с именем MASHA, кот. является mariadb, как :db - база данных
+* -p ... проброс портов. 1 - в хостовой, 2 - внутри контейнера
+* phpmyadmin/phpmyadmin - запустить образ
+далее в браузер -> localhost:8123 //если не сработает, то вместо локалхоста - ip по enp03
 
+---
+
+**Создание контейнера с MySQL:**  
+mkdir mysql_databases  
+sudo docker run --name $HOSTNAME -e MYSQL_ROOT_PASSWORD=lokation -v /home/vadim/mysql_databases:/var/lib/mysql -d mysql:8.0  
+* --name - задаем имя хоста
+* -e переменная среды с заданием пароля для рута
+* -v монтирование внешней папки из хостовой системы для сохранения баз данных в хостовой файловой системе в случае удаления контейнера
+* mysql:8.0 - образ контейнера и его версия
+
+> проверяем создание контейнера:  
+
+docker ps -a 
+
+> Заходим в MySQL БД
+
+docker exec -it ubuntu-Linux bash  
+mysql -u root -p   
+
+> Заполняем БД через консоль с помощью простых SQL-запросов 
+
+create database MY_STORE;  
+use MY_STORE;  
+create table GAMES (Id INT PRIMARY KEY AUTO_INCREMENT, Name VARCHAR(100) NOT NULL, Genre VARCHAR(45), Price DOUBLE NOT NULL);  
+INSERT INTO GAMES (Name, Genre, Price) VALUES ('World of Warcraft', 'MMORPG','2500.0'), ('DOTA 2', 'MOBA','650.0'), ('Lineage 2', 'MMORPG','0.0');  
+
+> Смотрим что получилось:
+
+SHOW * FROM GAMES;
+
+> Запускаем новый phpMyAdmin контейнер для отображения БД в браузере:
+
+sudo docker run -d --name phpMyAdmin_for_MySQL --link ubuntu-Linux:db -p 8123:80 phpmyadmin/phpmyadmin
+* --link ubuntu-Linux:db - связывает контейнер с именем ubuntu-Linux, кот. является MySQL, как :db - база данных
+* -p ... проброс портов. 1 - в хостовой, 2 - внутри контейнера
+* phpmyadmin/phpmyadmin - образ
+
+> Проверяем, что он создался: 
+
+docker ps -a
+
+> Теперь просто заходим в браузер и вводим в адресную строку: localhost:8123, где 8123 - порт в хостовой системе для проброса, который мы указывали при создании контейнера phpMyAdmin
+
+---
+
+`Создание своих образов`
+
+> Каждый образ (image) создается из `dockerfile`
+
+> Каждый образ состоит из слоев, каждый из которых представляет собой разницу между предыдущим и текущим (как в системах контроля версий)
+
+> Как лучше собирать образы? -> слои, которые не будут изменться, следует размещать ниже по сборке, а те, которые будут подлежать постоянному изменению - выше
+
+> Внутри контейнера при создании не перемещаться с помощью команды cd . - это приводит к созданию новых слоев (хз почему)
+
+**Команды (аргументы) по созданию Dockerfile:**  
+* FROM - Задает базовый образ на основании которого будет создан наш собственный
+  * FROM alpine //latest - default //alpine - другая ОС (более легковесная), там другие утилиты и структура файловой системы - важно это учитывать
+  * FROM ubuntu:22.04
+* LABEL - Добавление метаданных в образ //(метка) например, подписать автора, либо его контакты
+  * не замедляют процесс сборки
+  * LABEL maintainer = "Vadim Timofeev"
+  * LABEL mt_telegram = "@vadim.yalta"
+* ENV - Задает постоянные переменные образа
+  * подходит для создания констант внутри контейнера
+  * ENV ROOT_PW = "password"
+* ARG - Задание переменных во время сборки образа из командной строки в образ (не доступны во время работы контейнера)
+  * ее можно перезаначать
+  * ARG DB_name = 'example_db'
+* RUN - Выполнение команды Linux (создав при этом очередной слой)
+  * RUN apt update
+  * RUN apt upgrade
+  * RUN apt install openssh
+* COPY - Копирование файлов и папок //!!!Копируемый файл должен находиться в той же папке, что и dockerfile!
+  * COPY ./test.sh  - копирование из текущей директории
+  * COPY var/lib/example/test.sh - копирование с указанием полного пути //это не должно сработать!
+* ADD - Копирование файлов и папок + распаковка архивов
+  * можно добавлять файлы из удаленных источников
+  * ADD https://github.com/...
+* WORKDIR - Задание рабочей директории
+  * изменяет рабочую директорию
+  * лучше указывать абсолютный путь
+  * WORKDIR /usr/src/test_dir
+* CMD - Задание команды, выполняющейся при запуске контейнера //аргументы при запуске можно переопределить
+  * результаты не добавляются в образ во время сборки, то есть работает только после создания контейнера
+  * эту инструкцию принято писать в конце dockerfile
+* ENTRYPOINT - Задание команды, выполняющейся при запуске контейнера //тот случай, когда контейнер долджен выполнить только ту команду, которая прописана в энтрипоинт и ВСЁ! заходить в контейнер по много раз, давать ему различные команды на выполнение извне не выйдет!!
+  * эти аргументы переопределить нельзя
+  * ИСПОЛЬЗУЕТСЯ ДЛЯ ЗАПУСКА ПРИЛОЖЕНИЯ В КОНЕЧНОМ ВИДЕ
+  * ENTRYPOINT ["java", "test_var"]
+  * ENTRYPOINT ["bash", "sleep 600"]
+  * КОГДА? - запуск БД, запуск приложения
+* EXPOSE - Открытие порта в образ/контейнер для связи
+  * EXPOSE 8080 //не откроет порт, а является документацией к действию 
+* VOLUME - Создание точки монтирования (места в локальной системе, где контейнер будет хранить данные)
+  * VOLUME /test/my_volume123
+
+---
+
+* Cowsay - корова говорит ^^
+  * apt install cowsay 
+    * cowsay hi
+    * cowthink hi
+
+---
+
+> Пример конфига dockerfile (простейший):
+
+FROM ubuntu:22.04
+RUN apt-get update && \
+    apt install -y cowsay && \
+    ln -s /usr/games/cowsay usr/bin/cowsay && \
+    rm -rf /var/lib/apt/lists/*
+COPY trash.txt /   --файл должен находиться в той же папке, что и dockerfile
+CMD sleep 600
+
+> Пример конфига dockerfile (для nginx, который не упадет сразу при запуске контейнера)
+
+FROM ubuntu:22.04
+RUN apt-get update && \
+    apt-get install -y nginx
+EXPOSE 80
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
+
+---
+
+* Русский язык внутри контейнера с приложением
+
+FROM ubuntu:22.04
+RUN apt-get update && \
+    apt install -y openjdk-19-jre-headless language-pack-ru && \
+    rm -rf /var/lib/apt/lists/*
+COPY myapp.jar /usr/bin/
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANGUAGE ru_RU.UTF-8
+ENV LANG ru_RU.UTF-8
+ENV LC_ALL ru_RU.UTF-8
+RUN locale-gen ru_RU.UTF-8 && dpkg-reconfigure locales
+ENTRYPOINT /bin/bash
+
+
+
+* Чтобы приложение на останавливалось сразу после запуска:
+ENTRYPOINT /bin/bash
+
+* проверить работу nginx в контейнере:
+curl localhost:8081
+
+* var/www/html/index.nginx-debian.html - файл в контейнере nginx, отвечающий за приветствие
+
+* Чтобы создать/собрать образ:
+- docker build -t cowsaytest /home/vadim/create_dockerfile
+  * docker build -t cowsaytest . //если вместо пути точка - то dockerfile в текущей директории
+
+> При сборке образа необходимо понимать, что слой выше не имеет доступа к изменениям слоя ниже! Все имзменения необходимо вносить на этом же уровне, например, через амперсант (&&)
+
+* Чтобы переименовать образ:
+docker image tag cowsaytest1:latest cowsaytest:latest  
+//при этом создается копия старого образа с новым именем при docker images, удаляем старый и готово  
+
+* Сменить используемую версию Java в Ubuntu
+update-alternatives --config javac
+
+* Установить java jdk версии 19
+apt install openjdk-19-jre-headless

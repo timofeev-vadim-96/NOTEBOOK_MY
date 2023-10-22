@@ -147,6 +147,7 @@ Postgresql
   * alter table films MODIFY language int; //изменить тип данных в столбце
 * DROP - удаление текущего объекта (базы данных)
   * DROP TABLE student; //удалить таблицу
+  * DROP DATABASE db; //удалить базу данных
 * AS - позволяет определить название выходному столбцу
 * RENAME
   * rename table tablename to newtablename; // переименовать таблицу
