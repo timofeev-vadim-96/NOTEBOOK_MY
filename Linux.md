@@ -1268,7 +1268,7 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
   * dockdr rmi ubuntu:18.04 // с тегом
 ● docker logs nginx1 – просмотр логов контейнера
 * docker history name //какие этапы проходил контейнер при сборке (docker build). Если размер в записи > 0, то это новый слой
-* docker inspect infinite //информация о контейнере
+* docker inspect co_name //информация о контейнере
 * docker rename gallant_feistel geek_brains //переименовать контейнер
 * docker system df //место, занимаемое контейнерами и образами на жестком диске
 * docker system prune -af //удалить все неиспользуемые контейнеры и образы
@@ -1310,7 +1310,7 @@ VirtualBox. //обращение напрямую к сокетам (так же
 
 `Работа внутри контейнера`
 ● Не рекомендуется в реальной работе
-● Заходим: docker exec -ti nginx1 bash
+● Заходим: docker exec -ti nginx1 bash //если контейнер работает, то вместо "bash" - "sh"
   * exec - запустить
   * -ti - терминал + интерактивный режим ()
   * nginx1 - контейнер
@@ -1328,7 +1328,10 @@ VirtualBox. //обращение напрямую к сокетам (так же
 ● Формат YAML (отступы, вложенность)
 ● Автоматизация запуска систем контейнеров
 
+`YAML` - язык для сериализации данных. Позволяет хранить сложноорганизованные данные в компактном и читаемом формате.
+
 `Синтаксис docker-compose.yml`  
+
 version: '3'  //зависит от версии докер-компоус  
 services:  
  wordpress:  
@@ -1340,7 +1343,7 @@ services:
  - WORDPRESS_DB_HOST=db:3306  
  volumes: //подключаемые тома. сам топ -> куда пробрасывается  
  - wordpress:/var/www/html  
- networks: //внутренняя сеть  
+ networks: //внутренняя сеть для связи контейнеров
  - app-network  
 
  `Команды Docker Compose`
@@ -1353,6 +1356,9 @@ services:
 ● docker-compose stop – остановить
 ● docker-compose start – запустить
 ● docker-compose rm – удалить остановленные
+* docker-compose logs -f <service_name> //логи проекта
+* docker-compose exec - выполнить команду не заходя внутрь контейнера
+* docker-compose images - все доступные образы в текущей директории?
 
 Пример простейшего конфига:                                       
 version: '3'  
@@ -1363,6 +1369,40 @@ services:
       - 9080:80  
     volumes:  
       - /var/www/html:/usr/share/nginx/html  
+
+Еще один пример конфига yaml-файла:
+version: '3.0'
+services:
+  db: //название сервиса после 
+    **build: ./db** - РАБОТАЕТ ВМЕСТО IMAGES. (при создании собственного контейнера из dockerfile по указ. пути)
+    image: mysql:8.0
+    restart: always
+    networks: // может быть несколько сетей
+     - db-admin //просто название сети
+    environment: 
+      MYSQL_ROOT_PASSWORD: lokation
+  adminer:
+    image: adminer:4.8.1 / phpmyadmin //выбрать одно из двух
+    restart: always
+    networks: 
+     - db-admin
+    ports: 
+      - 6080:8080
+networkd:
+  db-admin: 
+
+Кусок для **деплоя через SWARM**:
+    # swarm
+    deploy:
+      placement:
+        constraints:
+          - "node.labels.TAG==stage"
+
+`Оркестрация контейнеров` - централизованное и эффективное управление, а также мониторинг контейнеров (например, с помощью docker-compose)
+Требования к инструменту оркестрации:
+* развертывание - возможность деплоить контейнеры в соответствии с заданными параметрами с помощью манифеста (yaml-файла)
+* масштабирование - возможность увеличения (уменьшения) кол-ва запущенных контейнеров, виртуальных сетей, IP-адресов
+* надежность (оркестратор выполняет множество фоновых задач по оптимизации работы (избавляется от мусора, закрывает ненужные контейнеры и т.д.))
 
 **WordPress** — бесплатная система управления контентом (CMS) с открытым исходным кодом, которая опирается на базу данных MySQL и обрабатывает запросы с помощью PHP.
 
@@ -1389,11 +1429,12 @@ sudo docker run -d --name phpmyadmin_for_maria --link MASHA:db -p 8123:80 phpmya
 
 **Создание контейнера с MySQL:**  
 mkdir mysql_databases  
-sudo docker run --name $HOSTNAME -e MYSQL_ROOT_PASSWORD=lokation -v /home/vadim/mysql_databases:/var/lib/mysql -d mysql:8.0  
+sudo docker run --name $HOSTNAME --restart always -e MYSQL_ROOT_PASSWORD=lokation -v /home/vadim/mysql_databases:/var/lib/mysql -d mysql:8.0  
 * --name - задаем имя хоста
 * -e переменная среды с заданием пароля для рута
 * -v монтирование внешней папки из хостовой системы для сохранения баз данных в хостовой файловой системе в случае удаления контейнера
 * mysql:8.0 - образ контейнера и его версия
+*  --restart always //без комм.
 
 > проверяем создание контейнера:  
 
@@ -1550,3 +1591,135 @@ update-alternatives --config javac
 
 * Установить java jdk версии 19
 apt install openjdk-19-jre-headless
+
+
+`Docker Swarm` - средство для отказоустойчивости нашего приложения. //использует те же .yaml файлы, что и docker-compose
+Свойства Docker Swarm:
+● Отказоустойчивость - при выходе из строя одной
+**ноды** из трех, наши контейнеры смогут
+продолжать работу на остальных узлах кластера
+● Увеличение ресурсов - в случае работы в
+кластере, существенно увеличивается мощность,
+доступная контейнерам для работы
+
+**Node (нода)** - это наш сервер с установленным на нем
+Docker. По сути, нодой могут быть как физические
+сервера, так и виртуальные машины
+
+Типы нод:
+Manager - может добавлять или удалять ноды кластера, на нем можно запускать контейнеры (может быть worker)
+Worker - может только запускать контейнеры
+● Stack - это набор сервисов, которые могут
+быть связаны между собой логически
+● Сервис - это составляющая стэка
+● Task/Container (задача) - непосредственно
+созданный контейнер
+
+`Команды Docker Swarm:` https://habr.com/ru/articles/659813/ //топ инструкция
+* docker node --help //помощь
+* docker swarm init - выдаст строку для связи с другими нодами путем добавления в общий кластер //запускаем на основной ноде (сервере), остальные будут присоединяться через "join"
+* docker node ls - посмотреть ноды в кластере
+* docker swarm join-token worker //в менеджере, чтобы вывести токе для присоединения другим нодам в качестве "worker"
+  * docker swarm join-token manager
+* docker swarm leave //покинуть рой данной ноде
+  * после этого: docker node rm id/name_node
+* docker node promote yekj7awhqmdd6gt154pla3mzp (id) //сделать ноду типа воркер типом менеджера
+* docker network ls //все сети docker'a
+* docker network create --driver overlay --subnet 4.5.6.0/24 test-network --attachable
+  * attachable - к ней можно присоединять другие контейнеры
+  * overlay - тип сети для связи нескольких контейнеров в разных нодах
+* docker run -d --ip 4.5.6.7 --network test-network --name container-1 busybox sleep 3600 //создать контейнер и присоединить к новосозданной сети
+* docker node update --label-add TAG=dev node-01 //чтобы повесить лейбл на ноду с хостименем node-01
+* docker stack ls //сервисы docker swarm services
+* docker stack deploy -c /home/vadim/dev_compose/compose.yml general-stack //**деплой** через .yaml файл
+
+
+
+* Чтобы создать сервис на базе docker swarm: (из 3х контейнеров)
+docker service create --name my-web \
+--replicas 3 \
+--publish published=8080,target=80 \
+nginx
+  * docker service rm 04f //удалить сервис (со всеми контейнерами)
+* Чтобы создать сервис и контейнеры по 1 на каждую ноду
+docker service create \
+  --mode global \
+  --publish mode=host,target=80,published=8080 \
+  --name=nginx \
+  nginx:latest
+
+Конфиг .yaml для Docker Swarm:
+version: '3.0'
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    networks:
+      - db-admin
+    environment: 
+      MYSQL_ROOT_PASSWORD: lokation
+    deploy:
+      mode: global //в случае деплоя на каждой ноде будет создан экземпляр контейнера
+
+  adminer:
+    image: adminer:4.8.1
+    networks:
+      - db-admin
+      - inner-web
+    restart: always
+    ports: 
+      - 6080:8080
+    # swarm
+    deploy:
+      mode: global
+
+networks:
+  db-admin:
+  inner-web:
+    external:
+      name: inner-web //это внешняя сеть типа overlay
+
+
+
+`Overlay сеть`
+● Overlay - виртуальная сеть, предн. для связи между контейнерами, которые могут располагаться в нескольких нодах
+
+● ingress - этот тип сети используется в ДС по //сесть общая для всех нод в кластере, регулирует нагрузку между нодами
+умолчанию при создании кластера. Она отвечает
+за связи, которые устанавливаются между
+контейнерами и внешним миром
+
+● vxlan - при использовании этого типа сетей, у нас
+не просто происходит создание Overlay-сети. В
+этом случае происходит инкапсуляция пакетов 2
+слоя модели OSI в четвертый
+
+● docker_gwbridge - эта сеть создается на каждом
+узле кластера. Она позволяет соединить трафик
+из контейнеров, находящихся внутри ДС
+кластера с внешним миром
+
+
+* Чтобы создать файл, при запуске которого будут выполняться команды, записанные внутри него:
+name.bash - тип оболочки в конце имени
+
+
+* Чтобы склонировать виртуальную машину: (имитация нескольких серверов)
+1. клонирование в VM
+2. политика mac-адреса: сгенерировать новые МАС-адреса все сетевых адаптеров (чтобы обновить ip на клонах)
+3. далее
+4. Связное клонирование
+
+* Чтобы изменить hostname: (временное решение)
+sudo hostname new
+sudo exit
+  * Чтобы изменить на постоянку: 
+    1. /etc/hostname - меняем
+    2. /etc/hosts - меняем внутри старый хост на новый (по-моему вторая строчка)
+
+
+1. Решение проблемы с неподключением ноды к рою (swarm) - выходит время:
+iptables --policy FORWARD ACCEPT && \
+iptables --policy OUTPUT ACCEPT && \
+iptables --policy INPUT ACCEPT
+sudo service network-manager restart //перезагрузить сеть
