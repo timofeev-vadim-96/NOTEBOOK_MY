@@ -1244,8 +1244,9 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
 `Запуск тестового контейнера`
 ● Установка Docker: apt install docker.io
 ● Проверка: sudo docker
-● Создать контейнер/запустить контейнер: docker run hello-world //run - создание+запуск контейнера (2в1)
+● Создать контейнер/запустить контейнер: docker run --rm hello-world//run - создание+запуск контейнера (2в1)
   * если не указывает тег версии образа - по умолчанию тег: latest
+  * --rm - удалить контейнер сразу после отработки
 
 **Команды Докера/Docker:**  
 * запуск уже установленных контейнеров: docker start name
@@ -1425,6 +1426,8 @@ sudo docker run -d --name phpmyadmin_for_maria --link MASHA:db -p 8123:80 phpmya
 * phpmyadmin/phpmyadmin - запустить образ
 далее в браузер -> localhost:8123 //если не сработает, то вместо локалхоста - ip по enp03
 
+`Docker-desktop` - на винде есть возможность использовать как windows-контейнеры, так и linux. //widnows не испльзуются в рамках java
+
 ---
 
 **Создание контейнера с MySQL:**  
@@ -1565,20 +1568,20 @@ ENV LANG ru_RU.UTF-8
 ENV LC_ALL ru_RU.UTF-8
 RUN locale-gen ru_RU.UTF-8 && dpkg-reconfigure locales
 ENTRYPOINT /bin/bash
-
-
-
-* Чтобы приложение на останавливалось сразу после запуска:
-ENTRYPOINT /bin/bash
+  * Чтобы приложение на останавливалось сразу после запуска:
+    * ENTRYPOINT /bin/bash
 
 * проверить работу nginx в контейнере:
 curl localhost:8081
 
 * var/www/html/index.nginx-debian.html - файл в контейнере nginx, отвечающий за приветствие
 
-* Чтобы создать/собрать образ:
-- docker build -t cowsaytest /home/vadim/create_dockerfile
+* Чтобы создать/`собрать образ` (создать образ):
+- docker build . -t cowsaytest:latest /home/vadim/create_dockerfile
   * docker build -t cowsaytest . //если вместо пути точка - то dockerfile в текущей директории
+  * cowsaytest:latest - тег для последующей заливки на DockerHub
+  * -t терминал
+  * . -из текущей папки
 
 > При сборке образа необходимо понимать, что слой выше не имеет доступа к изменениям слоя ниже! Все имзменения необходимо вносить на этом же уровне, например, через амперсант (&&)
 
@@ -1591,6 +1594,10 @@ update-alternatives --config javac
 
 * Установить java jdk версии 19
 apt install openjdk-19-jre-headless
+
+* Скопилировать класс на Java, записанный в файле .java:
+javac Main.java
+java Main - запустить его
 
 
 `Docker Swarm` - средство для отказоустойчивости нашего приложения. //использует те же .yaml файлы, что и docker-compose
@@ -1723,3 +1730,15 @@ iptables --policy FORWARD ACCEPT && \
 iptables --policy OUTPUT ACCEPT && \
 iptables --policy INPUT ACCEPT
 sudo service network-manager restart //перезагрузить сеть
+
+* Чтобы определить в Ubuntu mainclass для компилляции:
+javac -sourcepath ./src -d out src/ru/gb/.../Main.java
+  * ./src - куда складывать скопиллированные классы
+  !!! * фактически скомпиллировалось из папки src/main:
+    * javac -sourcepath ./java -d out .\java\org\example\Main.java
+
+* Запустить скопиллированный класс: (из src/main)
+  * java -classpath ./out org.example.Main //без расширения
+
+* образ ОС + JDK = bellsoft/liberica-openjdk-alpine
+

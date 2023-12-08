@@ -16,7 +16,7 @@ public class BinarySearch {
     public static int binarySearch(int [] inputArray, int searchNumb, int leftBoarder, int rightBoarder){
         int trySearch = (rightBoarder+leftBoarder)/2;
         if (inputArray[trySearch] == searchNumb) return trySearch;
-        else if (rightBoarder-leftBoarder == 1) return -1; //на случай, если искогомого в массиве нет
+        else if (rightBoarder-leftBoarder == 0) return -1; //на случай, если искогомого в массиве нет
         else if (inputArray[trySearch] > searchNumb) return binarySearch(inputArray, searchNumb, leftBoarder,
                 trySearch-1);//-1 т.к. саму серединку мы уже проверили
         else return binarySearch(inputArray, searchNumb, trySearch+1, rightBoarder); //+1 , потому что
@@ -24,7 +24,7 @@ public class BinarySearch {
     }
 
     public static int binarySearch(int [] inputArray, int searchNumb){
-        return binarySearch(inputArray, 8, 0, inputArray.length-1);
+        return binarySearch(inputArray, searchNumb, 0, inputArray.length-1);
     }
 
     public static int [] createArray(int size, int leftBoarder, int rightBoarder){

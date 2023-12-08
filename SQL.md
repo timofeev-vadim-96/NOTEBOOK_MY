@@ -140,11 +140,13 @@ Postgresql
   * use sem_1;
 * CREATE - создание новой таблицы
   * CREATE DATABASE newdatabase;
-* ALTER - заполение таблицы
+* ALTER TABLE - изменение таблицы
   * alter table tablename change oldcolumnname newcolumnname varchar(45); // изменить имя столбца
   * Alter table films add language varchar(50) null; //добавить столбец
   * alter table films DROP COLUMN language; //удалить столбец
   * alter table films MODIFY language int; //изменить тип данных в столбце
+* ALTER COLUMN
+  * alter table pets alter column id_human_friend set default 1; //установить значение по умолчанию уже после создания
 * DROP - удаление текущего объекта (базы данных)
   * DROP TABLE student; //удалить таблицу
   * DROP DATABASE db; //удалить базу данных
@@ -513,6 +515,14 @@ from phones; //в каждой строке сумма текущего знач
   * count()
 2. **Функции ранжирования**
   * ROW_NUMBER – функция возвращает номер строки и используется для нумерации;
+```sql
+with hd as (select id_pack_animal, name, birth_day from horses UNION ALL select id_pack_animal, name, birth_day from donkeys)
+select ROW_NUMBER() OVER (ORDER BY name) AS seq_numb, hd.name as name, hd.birth_day as birth_day, pa.kind as kind
+from pack_animals as pa
+right join hd
+on hd.id_pack_animal = pa.id_pack_animal;
+```
+
   * RANK — функция возвращает ранг каждой строки. Ранг определяется относительно значения строки по определенному столбцу. КРЧ, если, например, значения цены одинаковые - ранг будет одинаковый.  Но! с пропуском следующего значения. Это значит, что если у следующей строки значение будет отличаться, то она будет уже рангом не 1, а 3;
   * DENSE_RANK — функция возвращает ранг каждой строки. Но в отличие от функции RANK, она для одинаковых значений
   возвращает ранг, не пропуская следующий; Это значит, что у первых двух одинаковых строк будет ранг 1, а у третей 2
@@ -778,4 +788,13 @@ call fibonacci(6);
 `Конкантенация/соединение(объединение) строк`
 Пример:
 set @result := '';
-set @result := concat_ws(' ', @result, n);
+set @result := concat_ws(' ', @result, n); //не работает, по идее работает с сепоратором
+set @result := concat(' ', @result, n);
+
+* Разница даты в днях. Чтобы в месяцах: /30
+datediff(CURDATE(), birth_day)
+
+* Объединить таблицы с разным количеством столбцов:
+Select Col1, Col2, Col3, Col4, Col5 from Table1
+Union
+Select Col1, Col2, Col3, Null as Col4, Null as Col5 from Table2 //за счет Null значения

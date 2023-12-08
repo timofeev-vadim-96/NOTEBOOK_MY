@@ -1,4 +1,9 @@
-//Ищем максимальную разницу в цене, при этом продать можно только после покупки.
+
+
+/**
+ * 121. Best Time to Buy and Sell Stock
+ * Ищем максимальную разницу в цене, при этом продать можно только после покупки.
+ */
 class MaxProfit {
     public static void main(String[] args) {
         int [] prices = new int[]{11,4,22,14,6,4};
