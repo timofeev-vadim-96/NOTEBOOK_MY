@@ -62,7 +62,7 @@ javac -sourcepath ./src -d out src/ru/gb/.../Main.java
   !!! * фактически скомпиллировалось из папки src/main:
     * javac -sourcepath ./java -d out .\java\org\example\Main.java
 
-* Запустить скопиллированный класс: (из src/main)
+* Запустить скомпиллированный класс: (из src/main)
   * java -classpath ./out org.example.Main //без расширения
 
 * Утилита для документирования `javadoc` //находится в JDK
@@ -106,8 +106,5 @@ CMD java -classpath ./src/out org.example.Main
 
 ---
 
-**Курс по JDK - добавление графического интерфейса с помощью фреймворка swing**
 
-Базовые свойства окон:
-* все окна по умолчанию - невидимые
-* нажатие на крестик, по умолчанию, делает окно невидимым, а не завершает работу
+
