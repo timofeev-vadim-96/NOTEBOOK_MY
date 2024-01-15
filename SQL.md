@@ -798,3 +798,6 @@ datediff(CURDATE(), birth_day)
 Select Col1, Col2, Col3, Col4, Col5 from Table1
 Union
 Select Col1, Col2, Col3, Null as Col4, Null as Col5 from Table2 //за счет Null значения
+
+---
+
