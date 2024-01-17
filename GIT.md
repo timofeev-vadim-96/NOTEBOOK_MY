@@ -198,7 +198,7 @@ git config --global core.editor "nano"
 
 > `2 основные модели ветвления в GIT:`
 
-![git_flow](git_flow.png)
+![git_flow](images/git_flow.png)
 
 1. Git flow:
   * master - защищается от вливания не проверенных изменений
@@ -207,7 +207,7 @@ git config --global core.editor "nano"
   * release - протестированный dev, где еще раз очень тщательно тестируется и вливается в ветку мастер
   * hotfix - внедрение быстрых изменений - сразу вливается в ветку master
 
-![trunk-based-development](TBD.png)
+![trunk-based-development](images/TBD.png)
 2. Trunk-based development (TBD) 
   * основана на 1 основной ветке - master
   * новые ветки создаются для новых задач и удаляются после их вливанию в мастер

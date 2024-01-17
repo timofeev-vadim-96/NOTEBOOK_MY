@@ -44,14 +44,14 @@ URN - Uniform Resouce Name (унифицированне имя ресурса) 
     }
     </style>
 
-![селекторы_css](селекторы_css.png)
+![селекторы_css](images/селекторы_css.png)
 
 Блоки CSS:
 ● padding, пространство только вокруг контента (например, вокруг абзаца текста)
 ● border, сплошная линия, которая расположена рядом с padding
 ● margin, пространство вокруг внешней стороны элемента
 
-![padding, border, margin](margin_padding_boarder_css.png)
+![padding, border, margin](images/margin_padding_boarder_css.png)
 
 Внутри padding:
 ● width (ширину элемента)

@@ -1,21 +1,25 @@
 ### Hibernate - enterprise-фреймворк для Java - решает задачу связи классов Java с таблицами базы данных (и типов данных Java с типами данных SQL)
 
+ORM - object-relation-mapping - отношение объекта к БД крч. Является стандартом JPA. То, как мы соотносим поля объекта к столбцам в БД с помощью аннотаций. Hibernate относится к ORM и соответствует стандартам JPA.
+
 > учу здесь: https://javarush.com/groups/posts/hibernate-java
 
 > ссылка на PostgreSQL: https://www.postgresql.org/download/
 
 Пользователь по умолчанию в PostgreSQL:  'postgres', заданный мной пароль: мой дефолтный, порт: 8083
 
-Jakarta Persistence API (`JPA`; ранее Java Persistence API) — спецификация API Jakarta EE, предоставляет возможность сохранять в удобном виде Java-объекты в базе данных[1].
+Jakarta Persistence API (`JPA`; ранее Java Persistence Arhitecture) — спецификация API Jakarta EE, предоставляет возможность сохранять в удобном виде Java-объекты в базе данных[1].
+
+JDBC - средства подключения к БД
 
 `Аннотации`:
 @Entity (сущность)
 
-`Entity` (Сущность) — POJO-класс(англ. Plain Old Java Object) — «старый добрый Java-объект», связанный с БД с помощью аннотации ( 
+`Entity` (Сущность) — POJO-класс(англ. Plain Old Java Object) — «старый добрый Java-объект», связанный с БД с помощью аннотации или через XML. 
 ```java 
 @Entity 
 ```
-) или через XML. К такому классу предъявляются следующие **требования**:
+К такому классу предъявляются следующие **требования**:
 
 * Должен иметь пустой конструктор (public или protected)
 * Не может быть вложенным, интерфейсом или enum

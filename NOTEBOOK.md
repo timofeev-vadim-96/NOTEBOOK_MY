@@ -634,11 +634,11 @@ ArrayList<Integer> list = new ArrayList()<Integer>;
 
 Про компилляцию на разных языках: 
 Самые старые языки программирования (С++) сначала компиллировались (переводили свой код в машинный язык (бинарный код)), создавая файл .exe, а потом запускались. Весь процесс завязан на процессор и операционную систему.  
-[compile_lang.png](./compile_lang.png)  
+[compile_lang.png](./images/compile_lang.png)  
 Дважды компиллируемые (на примере C#) изначально в файле .cs(наш код), сначала компиллируются для виртуальной машины, а затем скомпилированный файл запускается. При этом первый запуск значительно дольше последующих, т.к. затрачивается время на компилляцию файла .exe. Последующие запуски происходят уже из это файла. 
-[twice_compil_lang.png](./twice_compil_lang.png)   
+[twice_compil_lang.png](./images/twice_compil_lang.png)   
 Компиллируемые и интерпретируемые (JAVA, Python, PHP) из файла .java or .py ... компиллируются в файл (например, .javac) с машинным бинарным кодом для виртуального вымышленного компьютера, код которого погружается в этот вымышленный компьютер, который понимает этот код и там происходит исполнение этого кода.  (например, java virtual machine)  
-[compile_and_interp_lang.png](./compile_and_interp_lang.png)
+[compile_and_interp_lang.png](./images/compile_and_interp_lang.png)
 
 ---
 
@@ -655,13 +655,13 @@ ArrayList<Integer> list = new ArrayList()<Integer>;
 (`View` - все, что связано с представлением данных, интерфейс  
 `Controller` - логика приложения  
 `Model` - хранит модели данных (классы, объекты))  
-![ModelViewController](ModelViewController.png)
+![ModelViewController](images/ModelViewController.png)
 
 2. Шаблон MVP (Model-View-Presenter) - в этом паттерне модель и представление разделены, а вместо контроллера используется презентер (presenter). Презентер обрабатывает данные, полученные от модели, и передает их на представление, которое отображает информацию пользователю.
-![ModelViewPresenter](ModelViewPresenter.png)
+![ModelViewPresenter](images/ModelViewPresenter.png)
 
 3. Шаблон MVVM (Model-View-ViewModel) - это вариант паттерна MVV, где вместо презентера используется ViewModel. ViewModel обрабатывает данные и передает их модели и представлению
-![ModelViewViewModel](ModelViewViewModel.png)
+![ModelViewViewModel](images/ModelViewViewModel.png)
 
 4. Шаблон Singleton - этот шаблон позволяет создавать только один экземпляр определенного класса в приложении. Это может быть полезно для сохранения состояния приложения или для доступа к общим ресурсам.
 

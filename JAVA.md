@@ -861,7 +861,8 @@ hasPrevious(), E previous(), nextIndex(), previousIndex(), set(E e), add(E e)
 **Random рандом**:  
 Random rd = new Random(); - переменная типа Rand..  
 for...
-list.app(rd.nextInt(1,11)); - добавляем рандомные числа в список от 1 до 10  
+list.app(rd.nextInt(11)); - добавляем рандомные числа в список от 0 до 10 
+//если .nextInt() - без параметров, то любое число от -2 миллиарда до 2 миллиардов (в границах инта) 
 
 * Чтобы увеличить экран IndIdea:  Alt + Shift + .  
 
@@ -1866,8 +1867,8 @@ String DATA_REGEX = "(0[1-9]|[12][0-9]|3[01])[.](0[1-9]|1[0-2])[.](19[0-9][0-9]|
 private static int counter = 0;  
 и увеличивать его либо в конструкторе, либо в методе add() и др.
 
-* Запуск jar файла из терминала
-java -jar -Dfile.encoding=UTF-8 myapp.jar
+* `Запуск jar файла из терминала!!!`
+java -jar -Dfile.encoding=UTF-8 myapp.jar //-Dfile... не обязательно, но бывает нужно!
 
 ---
 
@@ -2430,7 +2431,9 @@ REST (Representational State Transfer) — это не протокол, а ар
 `XML` (eXtensible Markup Language) — расширяемый язык разметки. Используется для хранения и передачи
 данных. Так что увидеть его можно не только в API, но и в коде.
 
-![устройство xml](xml_image.png)
+Проверка кода xml: https://jsonformatter.org/xml-formatter#Sample
+
+![устройство xml](images/xml_image.png)
 
 <req> - запрос
 
@@ -2451,11 +2454,11 @@ REST (Representational State Transfer) — это не протокол, а ар
 8. какая у запроса структура по вложенности элементов;
 9. ...
 
-![стандарт XSD для построения запросов XML](xsd-sheme.png)
+![стандарт XSD для построения запросов XML](images/xsd-sheme.png)
 
 Пример запроса по такой схеме:
 
-![пример запроса на XML](request_example.png)
+![пример запроса на XML](images/request_example.png)
 
 Правила оформления XML:
 1. Есть корневой элемент.
