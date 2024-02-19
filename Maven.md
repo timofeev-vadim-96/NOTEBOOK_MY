@@ -8,27 +8,26 @@ Maven - это инструмент для автоматической сбор
     <!--after_properties-->
     
     <!--AssertJ-->
-    <dependencies>
+
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.24.2</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+
 
     <!--GSON-->
-    <dependencies>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
             <scope>compile</scope>
         </dependency>
-    </dependencies>
+    
 
     <!--JUnit-->
-    <dependencies>
+  
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -132,6 +131,59 @@ Maven - это инструмент для автоматической сбор
     <artifactId>selenium-java</artifactId>
     <version>4.8.3</version>
 </dependency>
+
+<!--SPRING-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+        <dependency>
+        <!--SPRING (Для работы с MVC-приложениями)-->
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+
+<!--Themeleaf Spring6 шаблонизатор. ВАЖНО!! Версия такая же, как и SPRING!-->
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf-spring6</artifactId>
+            <version>3.1.2.RELEASE</version>
+        </dependency>
+
+<!--Jakarta Servlet (старая Javax)-->
+<!--Использует класс AbstractAnnotationConfigDispatcherServletInitializer, для замены web.xml-->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>6.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+<!--Hibernate validator-->
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+    <version>8.0.0.Final</version>
+</dependency>
+
+
 
 
 
@@ -241,3 +293,8 @@ build.gradle (на Kotlin) - для сборки. `Аналог pom`
 tasks.jar {
     manifest.attributes["Main-Class"] = "org.example.Main"
 }
+
+
+`как добавить переменную в pom.xml: ` 
+<spring.version>6.1.2</spring.version>
+и в нужное место - ${}

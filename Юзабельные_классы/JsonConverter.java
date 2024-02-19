@@ -100,6 +100,17 @@ public class JsonConverterUtil {
         String jsonContent = Files.readString(Paths.get(fileName));
         return convertFromJson(jsonContent, classType);
     }
+
+        /**
+     * Метод преобразование json-строки в Json-объект
+     *
+     * @param string json-строка
+     * @return Json-объект
+     */
+    public static JsonObject getJsonObjectFromString(String string) {
+        JsonParser parser = new JsonParser();
+        return parser.parse(string).getAsJsonObject();
+    }
 }
 
 
