@@ -46,7 +46,7 @@
 
 Утверждения (`Assert`) - встроенный в java механизм проверки правильности предположений. В основном, используется для тестирования во время разработки. Утверждения реализуются с помощью оператора assert и java.lang.Class AssertionError. 
 
-> изначально, в среде разработки **assert(утверждение)** не работае. Его необходимо включить. 
+> изначально, в среде разработки **assert(утверждение)** не работает. Его необходимо включить. 
 Или в настройках Idea: 
 1. Откройте меню Run
 2. Выберите Edit Configurations
@@ -393,10 +393,15 @@ import static org.mockito.Mockito.*;
     @Mock
     private Object object;
 
+> virify () НЕ УЧИТЫВАЕТ вызовы методов, если они помещены в цикл!!!!!
+
 > Правило: when() и verify() прописывать внутри конкретного теста
 
 `Задание условий вызова:`
 when() //принимает ТОЛЬКО возвращаемые типы данных!!!
+
+`Чтобы вызвать реальный метод на моковом войде`:  
+doCallRealMethod().when(bot).onUpdateReceived(update);
 
 `Когда, тогда вернуть:`
 when(...).thenReturn(...)
@@ -427,6 +432,13 @@ verify(mockedList, times(2)).add(twice);
 `Настройка ответа с помощью лябды`
 when().thenAnswer()
 when(hotelService.isRoomAvailable(anyInt())).thenAnswer(i -> ( Integer)i.getArgument(0) % 2 == 0);
+
+`Чтобы следить за объектом и его вызовами, когда это не мок-объект`
+@Spy - чтобы сработало, 
+включить аннотации - MockitoAnnotations.initMocks(this); //depricated
+НАД КЛАССОМ аннотировать:
+для JUnit5 - @ExtendWith(MockitoExtension.class)
+для JUnit4 - @RunWith(MockitoJUnitRunner.class)
 
 Пример полноценного теста и использованием `Mockito`:
     @Test
@@ -629,5 +641,29 @@ public class MyTestClass
 
 В JUnit5, для управления порядком выполнения тестовых методов можно использовать аннотацию @TestMethodOrder
 ```java
-@TestMethodOrder(OrderAnnotation.class)
+над классом
+@TestMethodOrder(OrderAnnotation.class) - для определения порядковых номеров тестов над тестами
+@Test
+    @Order(1)
+    public void firstTest() {
+    }
+@TestMethodOrder(MethodOrderer.MethodName.class) - в алфавитном порядк
 ```
+
+Плагин для `тестирования всего проекта` жизненным циклом Maven test:  
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.7.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>

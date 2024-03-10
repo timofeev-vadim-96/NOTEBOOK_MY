@@ -249,6 +249,12 @@ scanner.hasNextInt();
 * Чтобы получить текущую дату:  
 this.year = LocalDate.now().getYear();  
 
+* Чтобы получить дату на месяц меньше:  
+LocalDate monthsAgo1 = localDate.minusMonths(1);
+
+* Чтобы отформатировать LocalDate дату:  
+String formattedDate = date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
 * Вывести строку через маску (спецификатор):  
 String S = String.format("%d + %d = %d \n", a, b, c);  
         System.out.printf("%d + %d = %d \n", a, b, c);  
@@ -1808,7 +1814,7 @@ System.out.println(new SimpleDateFormat("dd.MM.yyyy.HH.mm").format(now));
 > НОРМАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ даты Date:
 1. String dateString = "2022-08-15"; // Формат "год-месяц-день" //через стрингу
     Date date = Date.valueOf(dateString);
-2. LocalDate localDate = LocalDate.of(2022, 8, 15);
+2. LocalDate localDate = LocalDate.of(2022, 8, 15); //проверит на валидность дату
     java.sql.Date date = java.sql.Date.valueOf(localDate);
 
 `import java.sql.Date` - для нормального отображения даты вместо стандартной Date
@@ -1966,7 +1972,7 @@ add - суммировать
 * Преобразование вниз - downCasting (когда кастуем один объект к другому)
   * перед преобразованием данных извне рекомендуется исопользовать instanceOf - вернет буливое значение
 
-* разбиение кода на регионы: //свойства(поля), методы, конструктор, геттеры и сеттеры
+* разбиение кода на регионы: (как в C#)     //свойства(поля), методы, конструктор, геттеры и сеттеры
 //region "name"
 //endregion
 
@@ -2430,6 +2436,10 @@ Stream<Integer> stream = Stream.empty();
 //findFirst().ifPresent
 Student student = students.stream().filter(st -> st.getId() == id).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Студент с указанным id не найден"));
+
+//findFirst().orElse() - чтобы исключить Исключение))) возвращаем null
+Valute valute = response.getValutes().stream().filter(val -> val.getCharCode().equals(charCode))
+        .findFirst().orElse(null);
 
 
 ---

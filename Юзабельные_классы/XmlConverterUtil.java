@@ -49,4 +49,23 @@ public class XmlConverterUtil {
             marshaller.marshal(convertableObject, file);
         }
     }
+
+        /**
+     * Метод для анмаршаллинга объекта из потока чтения
+     * @param in объект типа Reader
+     * @param classType класс, к которому кастуем
+     * @return T t
+     * @param <T> тип
+     */
+    public static <T> T unmarshallStream(Reader in, Class<T> classType) throws IOException, JAXBException {
+        StringReader reader;
+        Unmarshaller unmarshaller;
+        try (BufferedReader br = new BufferedReader(in)) {
+            String body = br.lines().collect(Collectors.joining());
+            reader = new StringReader(body);
+            JAXBContext context = JAXBContext.newInstance(classType); //в скобках класс, к которому приводим
+            unmarshaller = context.createUnmarshaller();
+        }
+        return (T) unmarshaller.unmarshal(reader);
+    }
 }

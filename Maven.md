@@ -75,6 +75,13 @@ Maven - это инструмент для автоматической сбор
     <version>4.11.0</version>
     <scope>test</scope>
 </dependency>
+<!--MOCKITO АННОТАЦИИ-->
+<dependency>
+    <groupId>org.mockito</groupId>
+     <artifactId>mockito-junit-jupiter</artifactId>
+     <version>3.5.10</version>
+     <scope>test</scope>
+ </dependency>
 
 
 <!--Testcontainers-->
@@ -183,6 +190,36 @@ Maven - это инструмент для автоматической сбор
     <version>8.0.0.Final</version>
 </dependency>
 
+<!-- quartz-scheduler/quartz -->
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+    <version>2.3.2</version>
+</dependency>
+
+<!--плагн для тестирования ВСЕГО ПРОЕКТА-->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.0.0-M5</version>
+        </dependency>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.7.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
 
 
 
@@ -259,42 +296,84 @@ Maven - это инструмент для автоматической сбор
 ```
 
 `Жизненный цикл Maven - описывает жизненный цикл разработки ПО`
+* default - основной. Отвечает за сборку, тестирование, пакетирование и развертывание проекта
 * clean - чистит проект от target и out (ранее скомпиллированные классы)
 * validate - проверяет структуру и отсуствтие некорректных зависимостей (например, циклические зависимости, когда есть две зависимости, зависящие друг от друга). Maven ожидает, что все зависимости выстроятся в древовидную структуру, а не созависимую.
 * compile - откомпиллит классы в target
 * test - выполнение всех юнит-тестов в проекте
 * package - создание jar
-* verify - запуск интеграционных тестов (эмм, они как-то помечаются??)
+* verify - проверка, что пакет соответствует критериям проекта
 * install - собранный артефакт сохраняется в локальный репозиторий на диске. В дальнейшем, можно будет либо испльзовать программу в других проектах, либо залить на maven repo
   * путь к локальному репо по умолчанию: «C:\Users\${UserName}\.m2\repository», где UserName это имя вашей учетной записи
 * site - генерация документации
 * deploy - заливка приложения на удаленный сервер и его запуск
 
----
-
-## Gradle - для более молодых проектов. Формирует сервисный объект на JVM, отслеживающий состояние проекта. Позволяет писать собственные сценарии и задачи (для отдельных этапов жизненного цикла)
-
-> долгий билд изначального проекта (подкачка платформы и junit 150 мб)
-
-структура проекта:  
-settings.gradle.kts: имя проекта  
-gradlew: скрипты, осуществляющие построение на bash
-build.gradle (на Kotlin) - для сборки. `Аналог pom`
-здесь:
-* plugins - плагины (в поиске "gradle плагины")
-* depe... - зависимости с тегами
-  * стандартная зависимость - implementation()
-* task...
-  * здесь, если нужно испльзовать какие-то утилиты(таски) при сборке
-
-Жизненный цикл в Gradle:
-* build - собрать проект. НО! не определен эндпоинт(входная точка, Main)
-Чтобы добавить манифест (просто ниже стандартного таска с тестом):
-tasks.jar {
-    manifest.attributes["Main-Class"] = "org.example.Main"
-}
-
-
 `как добавить переменную в pom.xml: ` 
 <spring.version>6.1.2</spring.version>
 и в нужное место - ${}
+
+---
+
+С курса по спрингу:  
+
+`Плагины` — это расширения Maven, предоставляющие дополнительные функции и возможности для
+управления **процессом сборки** вашего проекта. Плагины состоят из одной или нескольких задач (goals),
+которые могут быть вызваны в различных фазах жизненного цикла сборки.
+Размещаются в <build><plugins><plugin>here</plugin></plugins></build>
+
+
+`Репозитории` — это централизованные хранилища артефактов, таких как библиотеки и плагины. В Maven
+существует три типа репозиториев: локальный, центральный, удаленный.
+В случае с банком - это всегда локальный репозиторий (типа Nexus)   
+Пример:
+    <repositories>
+        <repository>
+            <id>example-repo</id>
+            <url>https://example.com/repo</url>
+        </repository>
+    </repositories>
+
+**Настройка проекта Maven**
+
+![maven-настройка](images/Maven_настройка.png)
+
+**profiles** - настройка запуска приложения на разных средах
+
+![профили](images/maven_profiles.png)
+
+УСТАНОВКА MAVEN:  
+https://maven.apache.org/install.html (распаковать и добавить в PATH папку bin)
+
+`Команды mvn:`
+mvn archetype:generate -DgroupID=ru.geekbrains -DafrifactId="myProject" -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false //DarchetypeArtifactId - шаблон проекта, DinteractiveMode=false - создание папок с дефолтными именами  
+mvn archetype:generate //создание проекта в интерактивном режиме  
+mvn package - сборка  
+mvn package -P development //подключить профиль   development   
+
+> плагин для проверки чистоты кода - checkstyle plugin
+
+Для исключения зависимости из сборки - scope
+
+![исключение зависимости из сборки](images/dependency_scope.png)
+
+
+`Создание собственного плагина: `  /sping_GB  
+```xml 
+<packing>maven-plugin</packing>  
+А также, добавить зависимость maven-plugin-api
+Создать класс, наследующий от AbstractMojo
+```
+
+Версия проекта 1.0.0 - мажор/минор/патч  
+
+Для исключения отдельных компонентов зависимости
+```xml
+<exclusions></exclusions>
+```
+
+Для исключения данной библиотеки
+```xml
+<optional>true</optional>
+
+
+Подбор версий зависимостей автоматически - dependency manager? типа в зависимостях не надо будет указывать номер версии
