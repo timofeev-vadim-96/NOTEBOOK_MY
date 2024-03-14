@@ -1,4 +1,4 @@
-### Конспект  
+## Конспект  
 
 `Содержание`:  
 
@@ -21,6 +21,14 @@
 17. [Алгоритмы и структуры данных](Алгоритмы_структуры_данных.md)
 18. [Сеть](Сеть.md)
 19. [Общая информация](NOTEBOOK.md)
+20. Методологии разработки:  
+    * [Agile](Agile/Agile.md)
+    * [SCRUM](Agile/SCRUM.md)
+    * [Kanban](Agile/Kanban.md)
+    * [Lean](Agile/Lean.md)
+    * [Выбор методологии](Agile/Выбор_методологии.md)
+    * [Глоссарий методологий](Agile/Глоссарий%20Методологий.md)
+
 > [Задачи Leetcode](Leetcode_tasks/Leetcode.md)
 
 ![cat-gif](https://gifdb.com/images/high/pc-macbook-cat-typing-vr1uwcz73g0zqhxm.gif)
