@@ -2,7 +2,7 @@
 
 ## Maven - для легаси проектов
 
-Maven - это инструмент для автоматической сборки проектов на основе описания их структуры в специальных файлах на языке POM (Project Object Model)
+`Maven` - это инструмент для автоматической сборки проектов на основе описания их структуры в специальных файлах на языке POM (Project Object Model)
 
 ```xml
     <!--after_properties-->
@@ -220,10 +220,6 @@ Maven - это инструмент для автоматической сбор
         </plugins>
     </build>
 
-
-
-
-
 ```
 
 `groupId, artifactId и version (GAV)` - индентификаторы проекта    
@@ -233,16 +229,20 @@ Maven - это инструмент для автоматической сбор
 Например: apache
 * version - версия. Пример: 1.0
 
+```xml
 <properties></properties> - настройки проекта
 <build></build> - параметры сборки проекта
+```
 
 Подуровень "build":
+```xml
 * <resources></resources> - доп.ресурсы. Например, свои доп. каталоги или файлы (например, файл с длинным SQL-запросом) (структура папок должна соответствовать проекту) org/example (именно через слэш, чтобы создалось две папки) и ниже (если есть).
 * <finalName>имя, которое будет у проекта (структура папок), игнорируя GAV</finalName> //ХЗ, или в build, или ниже в плагине сборки проекта, под GAV
+```
 
-Доп.инфа: //сомнительно полезно
-Компиллятор java (тот, который по дефолту указан в "properties"), это плагин maven. Все эти настройки проекта можно также пересобрать в блоке "build".
-Вот так:
+**Доп.инфа**  
+`Компиллятор java` (тот, который по дефолту указан в "properties"), это плагин maven. Все эти настройки проекта можно также пересобрать в блоке "build".  
+Вот так:  
 ```xml
     <build>
         <plugins>
@@ -309,7 +309,9 @@ Maven - это инструмент для автоматической сбор
 * deploy - заливка приложения на удаленный сервер и его запуск
 
 `как добавить переменную в pom.xml: ` 
+```xml
 <spring.version>6.1.2</spring.version>
+```
 и в нужное место - ${}
 
 ---
@@ -319,19 +321,24 @@ Maven - это инструмент для автоматической сбор
 `Плагины` — это расширения Maven, предоставляющие дополнительные функции и возможности для
 управления **процессом сборки** вашего проекта. Плагины состоят из одной или нескольких задач (goals),
 которые могут быть вызваны в различных фазах жизненного цикла сборки.
-Размещаются в <build><plugins><plugin>here</plugin></plugins></build>
+Размещаются в   
+```xml
+<build><plugins><plugin>here</plugin></plugins></build>
+```
 
 
 `Репозитории` — это централизованные хранилища артефактов, таких как библиотеки и плагины. В Maven
 существует три типа репозиториев: локальный, центральный, удаленный.
 В случае с банком - это всегда локальный репозиторий (типа Nexus)   
 Пример:
+```xml
     <repositories>
         <repository>
             <id>example-repo</id>
             <url>https://example.com/repo</url>
         </repository>
     </repositories>
+```
 
 **Настройка проекта Maven**
 
@@ -341,18 +348,20 @@ Maven - это инструмент для автоматической сбор
 
 ![профили](images/maven_profiles.png)
 
-УСТАНОВКА MAVEN:  
+**УСТАНОВКА MAVEN:**   
 https://maven.apache.org/install.html (распаковать и добавить в PATH папку bin)
 
-`Команды mvn:`
-mvn archetype:generate -DgroupID=ru.geekbrains -DafrifactId="myProject" -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false //DarchetypeArtifactId - шаблон проекта, DinteractiveMode=false - создание папок с дефолтными именами  
-mvn archetype:generate //создание проекта в интерактивном режиме  
-mvn package - сборка  
-mvn package -P development //подключить профиль   development   
+`Команды mvn:`  
+```bash
+mvn archetype:generate -DgroupID=ru.geekbrains -DafrifactId="myProject" -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false #DarchetypeArtifactId - шаблон проекта, DinteractiveMode=false - создание папок с дефолтными именами  
+mvn archetype:generate #создание проекта в интерактивном режиме  
+mvn package # - сборка  
+mvn package -P development # подключить профиль   development  
+``` 
 
 > плагин для проверки чистоты кода - checkstyle plugin
 
-Для исключения зависимости из сборки - scope
+Для исключения зависимости из сборки - `scope`
 
 ![исключение зависимости из сборки](images/dependency_scope.png)
 
@@ -364,7 +373,7 @@ mvn package -P development //подключить профиль   development
 Создать класс, наследующий от AbstractMojo
 ```
 
-Версия проекта 1.0.0 - мажор/минор/патч  
+`Версия проекта` 1.0.0 - мажор/минор/патч  
 
 Для исключения отдельных компонентов зависимости
 ```xml
@@ -374,6 +383,6 @@ mvn package -P development //подключить профиль   development
 Для исключения данной библиотеки
 ```xml
 <optional>true</optional>
+```
 
-
-Подбор версий зависимостей автоматически - dependency manager? типа в зависимостях не надо будет указывать номер версии
+> Подбор версий зависимостей автоматически и сбор проекта - используя https://start.spring.io/

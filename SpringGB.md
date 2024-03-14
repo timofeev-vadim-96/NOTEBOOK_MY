@@ -42,8 +42,9 @@ Spring базируется не нескольких принципах. Клю
 + @Autowired - для автоматического внедрения зависимостей. Фактически, используется с полем только. Ищет подходящий тип по интерфейсу или классу
   * если спринг не найдет зависимость -> UnsatisfiedDependencyException
   * если спринг находит несколько подходящих бинов -> UnsatisfiedDependencyException
-  * используется на полях - внедрит даже в приватное, даже без сеттера или конструктора (с помощью Reflection API)
-@GetMapping("/some-url") //помечаются методы, которые будут вызываться при вызове определенной URL
+  * используется на полях - внедрит даже в приватное, даже без сеттера или конструктора (с помощью Reflection API)  
+
+@GetMapping("/some-url", produces = MediaType.TEXT_PLAIN_VALUE, consumes = ...) //помечаются методы, которые будут вызываться при вызове определенной URL, **produces** - тип данных, которые возвращает, **consumes** - тип принимаемых данных
 
 p.s.
 Spring берет все наши классы как бы из контейнера. 
@@ -63,7 +64,7 @@ Spring берет все наши классы как бы из контейне
  
 
 `Область видимости бинов` (Bean scope)  
-Scope - задает то, КАК Spring будет создавать бины  
+@Scope - задает то, КАК Spring будет создавать бины  
 Виды scope:   
 * Чаще всего - Singleton - по умолчанию. При всех вызовах getBean() - возвращается один и тот же объект //используетяс тогда, когда у нашего бина нет изменяемых состояний (свойств)
 * Prototype - создает новый объект каждый раз при вызове getBean() //используется тогда, когда у бина есть изменяемые состояния (stateful)
@@ -86,7 +87,11 @@ Scope - задает то, КАК Spring будет создавать бины
 
 **Другие параметры конфигурации:**  
 ✔ server.port: порт, на котором будет работать ваше приложение.  
-По умолчанию это 8080, но вы можете задать любой другой порт.   
+По умолчанию это 8080, но вы можете задать любой другой порт.  
+```yaml
+server:
+  port: 8180
+``` 
 ✔ spring.application.name: имя вашего приложения.  
 Оно может быть полезно для логирования и других вещей.  
 ✔ **spring.profiles**.active: активные профили Spring.  
@@ -144,7 +149,7 @@ public class SpringConfig {
 `REST` - это архитектурный стиль, используемый для обмена данными в вебе. (пример: **JSON**)
 
 `Методы HTTP-запросов:`
-* Get - для запроса данных с сервера.
+* Get - для запроса данных с сервера. Тело запроса пустое. Но некоторые **параметры** поиска могут передаваться в самом URL после знака "?" в формате ключ=значение, такие параметры разделяются амперсантом И "&"  
 * Post - для отправки данных на сервер, чтобы создать новый ресурс. 
 * Put - для обновления существующего ресурса на сервере. 
 * Patch
@@ -168,11 +173,64 @@ public class SpringConfig {
 * header - заголовки (информация о клиенте)
 * body (не обязательно) - тело запроса
 
+CRUD-APP стандарт адресов (из стандарта REST):  
+
+![CRUD_app_standart](images/crud_http_app.png)
+
 `Контроллер в Spring` — это компонент, который
 обрабатывает входящие HTTP-запросы. В нем прописываются какие именно запросы могут быть обработаны и как на них реагировать.  
 Контроллер в Spring помечается аннотацией `@Controller`
 
 `@RestController` - является специализацией @Controller и используется, когда вы хотите, чтобы результат вашего метода контроллера был автоматически преобразован в JSON (или в другой формат, такой как XML), чтобы возвращаться как тело HTTP-ответа. Она часто используется для создания веб-сервисов (RESTful API). Автоматически добавляет @ResponseBody к каждому методу контроллера, что позволяет возвращать данные напрямую в теле HTTP-ответа вместо представлений (views). (чаще всего - JSON).
+
+`Разница между @Controller и @RestController`  
+В Spring, аннотация **@RestController** используется для
+создания HTTP API, возвращая данные, которые клиент может
+обрабатывать, в то время как **@Controller** обрабатывает HTTPзапросы и возвращает веб-страницу с возможными
+динамическими данными. При использовании @Controller,
+наш код легко интегрируется с **Thymeleaf** и другими
+технологиями для создания динамических веб-страниц.
+
+
+`Образец контроллера` 
+```java
+@RestController
+@RequestMapping("/task")
+public class TaskController {
+    private TaskService taskService;
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
+
+    @GetMapping
+    public List<Task> getAllTasks(){
+        return taskService.getTasks();
+    }
+
+    @GetMapping("/{id}")
+    public Task getTask(@PathVariable("id") UUID id){
+        return taskService.getTask(id);
+    }
+
+    @PostMapping
+    public ResponseEntity<Task> postTask(@RequestBody Task newTask){
+        Task createdTask = taskService.add(newTask);
+        return new ResponseEntity<>(createdTask, HttpStatus.CREATED);
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<Task> updateTask(@PathVariable("id") UUID id, @RequestBody Task newTask){
+        Task createdTask = taskService.update(id, newTask);
+        return new ResponseEntity<>(createdTask, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteTask(@PathVariable("id") UUID id){
+        taskService.delete(id);
+    }
+
+}
+```
 
 Аннотация `@RequestMapping`("/api") - все URL-запросы должны иметь в теле "/api/"
   * Устаревший вариант > 5 лет - @RequestMapping(value = "/new", method = RequestMethod.GET) //после точки - вид запроса
@@ -189,7 +247,7 @@ public class SpringConfig {
 `@PathVariable`("id") - получение переменной из запроса "items/{id}", когда такая переменная обязательна  
 
 **Работаем с параметрами запроса**  
-Для того чтобы принять параметры из строки запроса, мы можем использовать аннотацию `@RequestParam`. 
+Для того чтобы принять параметры из строки запроса, мы можем использовать аннотацию `@RequestParam`. (параметры передаются через ?ключ=значение&ключ=значение)
 ![извлечение параметров запросов](images/spring_request_param.png)
 
 **Обработка исключений в Spring**  
@@ -210,6 +268,15 @@ public class SpringConfig {
 `Пример использования для POST-запроса в HTTPie`  
 ![пример использования HTTPie](images/httpie_post.png)
 
+**Точка входа в Spring-приложение:**  
+```java
+	public static void main(String[] args) {
+        //эта тема класса типа ApplicationContext context
+		SpringApplication.run(StudentApiApplication.class, args);
+        //из нее можно вытаскивать бины через .getBean()
+	}
+```
+
 `Swagger`  
 Swagger — это инструмент для автоматической генерации документации для RESTful
 API. Он позволяет вам описать структуру вашего API, а затем автоматически
@@ -219,34 +286,18 @@ API. Он позволяет вам описать структуру вашег
 
 **Зависимость Swagger**  
 ```xml
-<dependency>
-<groupId>io.springfox</groupId>
-<artifactId>springfox-swagger2</artifactId>
-<version>2.9.2</version>
-</dependency>
-```
-
-**Конфигурация Swagger**  
-```java
-@Configuration
-@EnableSwagger2
-public class SwaggerConfig {
-@Bean
-public Docket api() {
-return new Docket(DocumentationType.SWAGGER_2)
-.select()
-.apis(RequestHandlerSelectors.any())
-.paths(PathSelectors.any())
-.build();
-}
-}
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version>
+		</dependency>
 ```
 
 **Документация, созданная с помощью Swagger**  
 [http://localhost:8080/swagger-ui.html ](http://localhost:8080/swagger-ui.html)  (замените
 localhost:8080 на адрес и порт вашего приложения, если они отличаются).  
 
-`Curl` (запрос можно создать в Postman)  
+`Curl` (запрос можно создать в Swagger (в браузере), Postman)  
 для тестирования на стороне клиента - просто послать сообщением команду, а клиент в командной строке может тупо ее вставить и нажать Enter.
 
 **curl** — это мощный инструмент командной
@@ -282,3 +333,20 @@ CMD ["java", "-jar", "my-app-1.0.0.jar"]
 * EXPOSE 8080 говорит Docker, что наше приложение будет слушать на порту 8080.
 * CMD ["java", "-jar", "my-app-1.0.0.jar"] запускает наше приложение внутри контейнера
 
+---
+
+```java
+@Primary //делает бин приоритетным
+```
+
+Для уточнения бина, используемого при @Autowired. 
+```java
+@Qualifier("rockBean") //rockBean - id бина 
+``` 
+  * НО! когда используем в конструкторе, указывать рядом с входящим аргументом вот так:
+  ```java
+    @Autowired
+    public MusicPlayer(@Qualifier("rockBean") Music music) {
+        this.music = music;
+    }
+    ```
