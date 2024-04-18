@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 # JAVA - кроссплатформенный язык с обратной совместимостью всех версий  
 
 Java - строготипизированный, объектноориентированный язык программирования общего назначения
@@ -1960,7 +1964,9 @@ https://stackoverflow.com/questions/16992255/how-can-i-make-intellij-idea-update
 BitInteger bi = new BigInteger();
 add - суммировать
 
-`API` - способ взаимодействия с классом (его методы + документация к классу) = его интерфейс
+`API` - **способ взаимодействия** с классом (его методы + документация к классу) = его интерфейс
+
+При разработке API аналитики рождают для нас `sequence-диаграммы` (диаграммы последовательности), где описана логика взаимодействия клиент-серверного приложения в виде диаграммы.  
 
 `static` - модификатор, определяющий, что поле или метод будет относиться к самому классу, и для их вызова создавать объект не нужно. Такие методы можно вызывать через имя класса, не создавая его. Значения же полей хранятся в классах, а не в объектах.
   * к статическим переменным и методам необходимо обращаться по имени класса!
@@ -2237,6 +2243,7 @@ executor.submit(здесь или Runneble - сделал и забыл ИЛИ C
 * Queue<Integer> queue = new ConcurrentLinkedDeque<>(); //топ, отлично работает с многопоточкой
 * также ConcurrentHashMap
 * List<Integer> list = new CopyOnWriteArrayList<>(); //здесь итерация происходит по копии списка. Проблема: к концу итерации другой поток исходный список может уже изменить. 
+* Map<String, String> map = new ConcurrentHashMap<>();
 
 `CountDownLatch` - класс для отслеживания сосостояния потока. Счетчик для обработавших потоков. Так называемый "примитив синхронизации"
 
@@ -2515,13 +2522,20 @@ List<Person> list = new ArrayList<>();
 
 ---
 
-Создание своей **кастомной аннотации**:  
+Создание своей **кастомной аннотации** (key: своя аннотация):  
 ```java
 //Аннотация к Классу
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE) //пометка всего класса
 public @interface Table {
     String name(); //строковое значение аннотации, например, имя таблицы соотношения в БД
+}
+
+//аннотация и к классу, и к методу
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Timer {
+    Level level() default Level.INFO;
 }
 
 //Аннотация к ПОЛЮ
@@ -2532,7 +2546,35 @@ public @interface Column {
     boolean primaryKey() default false;
 }
 
+//достать параметр из аннотации
+    private String getAnnotationParam(ProceedingJoinPoint proceedingJoinPoint){
+
+        //если аннотация над методом
+        MethodSignature methodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
+        Timer timerAnnotation = methodSignature.getMethod().getAnnotation(Timer.class);
+
+        if (timerAnnotation != null){
+            return timerAnnotation.localTime();
+        }
+
+        //если аннотация над классом
+        return proceedingJoinPoint.getTarget().getClass().getAnnotation(Timer.class).localTime();
+    }
+
+```  
+
+`RetentionPolicy виды`:  
+1. Runtime - ставить так
+2. Class - по умолчанию. В итог попадет, но в рантайме считать не сможем, ее там не будет (специфичная вещь)
+3. Source - данная аннотация видна исключительна в коде (типа @Override), при компилляции в коде ее не будет
+
+Класс, предполагаюдий, что может быть null:  
+```java
+Optional<BookEntity> book
+//чтобы вернуть:
+book.map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build())
 ```
+
 
 
 

@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 # Веб-технологии
 
 > Бесплатный веб-хостинг: https://beget.com/ru/hosting/free
@@ -121,7 +125,10 @@ img {
 
 > Стили сохранять в отдельном от страницы файле. И добавить:  
 ```html
-<link href="styles.css" rel="stylesheet" type="text/css">
+<head>
+<title>Main page<title>
+<link href="styles.css" rel="stylesheet" type="styles/css">
+</head>
 ```
 
 > Найти особенный цвет для html css: html color в браузере
@@ -215,7 +222,7 @@ HTML состав элемента (element): opening tag with atribut (назв
 <p><strong>жирный текст с пометкой для машин</strong></p> //также поисковые роботы будут видеть, что этот текст более важен  
 <p><b>жирный текст</b></p>       
 <p><i>курсив</i></p>       
-<img src="https://i.gifer.com/2GU.gif" alt="Мое тестовое изображение"width="600" height="400"> //вставка изображения. src - путь где лежит картинка, alt - текст, если картинка не загрузится, далее размеры
+<img src="https://i.gifer.com/2GU.gif" alt="Мое тестовое изображение "width="600" height="400"> //вставка изображения/вставить картинку. src - путь где лежит картинка, alt - текст, если картинка не загрузится, далее размеры
  <img src="C:\Users\DELL\Desktop\Разработчик GB\Web-tech\simple_cat.jpg" alt="изображение обычного кота в полоску" width="600" height="400"> //это изображение с компа
 <ul> - ненумированный список
   * <li> - элемент списка внутри
@@ -230,6 +237,36 @@ HTML состав элемента (element): opening tag with atribut (назв
 <p id="elem_first">//чтобы дать id элементу. После чего - в стилеях можно: #elem_first{} //и задать стиль конкретно этому элементу
 <p style="color:red"> //добавить стиль прямо внутри тега
 <scrypt></scrypt> //для добавления кода js
+<span>Здесь отображается изолированный участок текста</span>
+<table>
+  <tr>
+    <th></th> - TH заголовочное значение Колонки1
+    <th></th> - заголовочное значение Колонки2
+    <th></th> - заголовочное значение Колонки3
+  </tr> - строка
+    <tr>
+    <td></td> - TD обычное значение Колонки1
+    <td></td> - обычное значение Колонки2
+    <td></td> - обычное значение Колонки3
+  </tr> - строка
+</table> - таблица
+
+<form action="/logout" method="POST"></form> - формы
+```
+
+Пример формы:  
+```xml
+<form action="/login" method="POST">
+    <div>
+        <label>Username: <input type="text" name="username"></label>
+    </div>
+    <div>
+        <label>Password: <input type="password" name="password"></label>
+    </div>
+    <div>
+        <button type="submit">Login</button>
+    </div>
+</form>
 ```
 ---
 

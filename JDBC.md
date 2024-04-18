@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 `JDBC` (Java Database Connectivity) API — это программный интерфейс, предоставляющий набор классов и
 методов для взаимодействия с базами данных из языка программирования Java. JDBC обеспечивает
 стандартизированный способ подключения к различным системам управления базами данных (СУБД),
@@ -8,7 +12,7 @@
 
 `JDBC` - крч это драйвер для конкретной СУБД (драйвер пишется самими разработчиками СУБД) c классами и методами для подключения и выполнения запросов к БД.
 
-Jakarta Persistence API (`JPA`; ранее Java Persistence Arhitecture) — спецификация API Jakarta EE, предоставляет возможность сохранять в удобном виде Java-объекты в базе данных.
+`Jakarta Persistence API` (`JPA`; ранее Java Persistence Arhitecture) — спецификация API Jakarta EE, которая описывает, как взаимодействовать с БД на уровне объектов. Она позволяет использовать БД как хранилище объектов, минуя SQL-запросы.   
 
 `ORM` - object-relation-mapping - отношение объекта к БД крч. Механизм преобразования данных между java-объектом и таблицей в БД. Является стандартом JPA. То, как мы соотносим поля объекта к столбцам в БД с помощью аннотаций. Hibernate относится к ORM и соответствует стандартам JPA.
 
@@ -33,13 +37,24 @@ docker run --name mysql_container -e MYSQL_ROOT_PASSWORD=lokation -p 3306:3306  
         //для подключения к БД
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD)) {
             //SQL - запрос
-            Statement statement = connection.createStatement();
-            statement.execute("CREATE DATABASE container_database");
+            try (Statement statement = connection.createStatement()){
+                    statement.execute("CREATE DATABASE container_database");
+            };
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+```
+
+Для соединения с БД - интерфейс `DataSource`, который можно получить из контекста  
+
+```java
+DataSource dataSource = context.getBean(DataSource.class);
+
+try (Connection connection = dataSouce.getConnection()){
+    Statement statement = connection.createStatement();
+}
 ```
 
 
@@ -49,6 +64,7 @@ docker run --name mysql_container -e MYSQL_ROOT_PASSWORD=lokation -p 3306:3306  
             //.next() - возвращает boolean, о том, что удалось прочетать очередную запись из таблицы
             while (res.next()){
                 System.out.println("id: " + res.getInt(1) + //для возвращения интовых значений из таблицы (номер столбца)
+                //можно еще res.getInt("id") - по наименованию столбца
                         " name: " + res.getString(3) + " " + //для стринговых значений
                         " second name: " + res.getString(2));
             }
@@ -73,3 +89,8 @@ docker run --name mysql_container -e MYSQL_ROOT_PASSWORD=lokation -p 3306:3306  
 - statement.execute() - просто выполнить
 - statement.executeUpdate() - для запросов типа INSERT, UPDATE and DELETE //возвращает количество измененных записей после выполнения запроса
 - statement.executeQuery() - для возвращения объекта типа ResultSet (коллекции)
+
+---
+
+`Spring Data JDBC`  
+

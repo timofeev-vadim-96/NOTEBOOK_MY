@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 Евгений Манько - преподаватель GeekBrains 
 
 `Framework` - каркас/платформа, которая определяет структуру системы (приложения), и облегчает разработку компонентов
@@ -181,6 +185,8 @@ CRUD-APP стандарт адресов (из стандарта REST):
 обрабатывает входящие HTTP-запросы. В нем прописываются какие именно запросы могут быть обработаны и как на них реагировать.  
 Контроллер в Spring помечается аннотацией `@Controller`
 
+`@Controller` - именно в таком виде аннотации - для возвращения HTML-страниц.
+
 `@RestController` - является специализацией @Controller и используется, когда вы хотите, чтобы результат вашего метода контроллера был автоматически преобразован в JSON (или в другой формат, такой как XML), чтобы возвращаться как тело HTTP-ответа. Она часто используется для создания веб-сервисов (RESTful API). Автоматически добавляет @ResponseBody к каждому методу контроллера, что позволяет возвращать данные напрямую в теле HTTP-ответа вместо представлений (views). (чаще всего - JSON).
 
 `Разница между @Controller и @RestController`  
@@ -192,7 +198,7 @@ CRUD-APP стандарт адресов (из стандарта REST):
 технологиями для создания динамических веб-страниц.
 
 
-`Образец контроллера` 
+`Образец REST-контроллера` 
 ```java
 @RestController
 @RequestMapping("/task")
@@ -232,6 +238,35 @@ public class TaskController {
 }
 ```
 
+> В случае, когда `ресурс не найден` можно вернуть 
+```java
+return ResponseEntity.notFound().build();
+```
+
+Правильное `возвращение объекта при его создании` (с его адресом, куда можно обратиться в дальнейшем для его получения):  
+```java
+    @PostMapping
+    public ResponseEntity<BookEntity> addBook(@RequestBody BookEntity inputBookEntity) {
+        BookEntity bookEntity = service.save(inputBookEntity);
+        URI location = ServletUriComponentsBuilder 
+                .fromCurrentRequest() //создать сервлет на основе текущего HTTP-запроса
+                .path("/{id}") //добавляет путь /{id} к URI, где {id} - это идентификатор сущности bookEntity.
+                .buildAndExpand(bookEntity.getId()) // заменяет переменные пути ({id}) значением фактического идентификатора сущности bookEntity.
+                .toUri(); //возвращает объект URI, представляющий конечную точку ресурса, к которому следует перейти или созданный ресурс.
+        return ResponseEntity.created(location).body(bookEntity);
+    }
+```
+
+**Альтернатива положительного ответа** через new ResponseEntity... :  
+```java
+ResponseEntity.status(HttpStatus.CREATED).body(issue);
+```
+
+`При Delete-запросе HTTP возвращать: ` 
+```java
+ResponseEntity<Void>
+```
+
 Аннотация `@RequestMapping`("/api") - все URL-запросы должны иметь в теле "/api/"
   * Устаревший вариант > 5 лет - @RequestMapping(value = "/new", method = RequestMethod.GET) //после точки - вид запроса
 
@@ -250,11 +285,20 @@ public class TaskController {
 Для того чтобы принять параметры из строки запроса, мы можем использовать аннотацию `@RequestParam`. (параметры передаются через ?ключ=значение&ключ=значение)
 ![извлечение параметров запросов](images/spring_request_param.png)
 
+`Сделать не обязательным параметр @RequestParam`:  
+```java
+@RequestParam(required = false)
+```
+
 **Обработка исключений в Spring**  
 В Spring мы можем использовать
 аннотацию `@ExceptionHandler` для определения методов, которые будут обрабатывать определенные
 исключения.
 ![метод для обработки исключений](images/spring_exception_handler.png)  
+
+Также, можно определить целый `класс для перехвата всех исключений` и реализовать в нем методы их обработки  
+Такие классы помечаются с помощью `@ControllerAdvice`  
+![класс обработки исключений](images/spring_conroller_advice.png)
 
 **Обработка JSON в Spring**  
 Большинство RESTful API используют JSON для обмена данными. Spring автоматически преобразует объекты в JSON и наоборот. Все, что нам нужно сделать, это использовать аннотацию `@RequestBody` для принятия JSON
@@ -265,8 +309,14 @@ public class TaskController {
 Для этого используется программа HTTPie - аналог Postman    
 [ссылка: HTTPPie](https://httpie.io/app) или приложение локально на ПК
 
+`Postman` — это приложение, которое
+позволяет вам легко создавать и отправлять HTTP-запросы
+к любому эндпоинту и просматривать ответы.   
+https://www.postman.com/downloads/
+
 `Пример использования для POST-запроса в HTTPie`  
-![пример использования HTTPie](images/httpie_post.png)
+![пример использования HTTPie](images/httpie_post.png)  
+* в Postman: body -> raw + JSON для POST-запроса  
 
 **Точка входа в Spring-приложение:**  
 ```java
@@ -284,18 +334,67 @@ API. Он позволяет вам описать структуру вашег
 проверки работы вашего API. Это очень удобно для разработчиков, тестировщиков
 и конечных пользователей вашего API.  
 
+`Просто добавить зависимость и ВСЕ`
 **Зависимость Swagger**  
 ```xml
+<!--1 вариант-->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.3.0</version>
 		</dependency>
+
+<!--2 вариант тоже рабочий-->
+        		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>3.0.0</version>
+		</dependency>
 ```
 
 **Документация, созданная с помощью Swagger**  
-[http://localhost:8080/swagger-ui.html ](http://localhost:8080/swagger-ui.html)  (замените
-localhost:8080 на адрес и порт вашего приложения, если они отличаются).  
+[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  (замените
+localhost:8080 на адрес и порт вашего приложения, если они отличаются). 
+
+Генерация документации JSON с помощью Swagger:  localhost:8080/v3/api-docs  
+
+Настройка информации в UI-документации от сваггера   
+для контроллеров с помощью `@Operation` и `@ApiResponse`:  
+```java
+    @Operation(summary = "get all books", description = "Предоставляет список всех имеющихся книг в библиотеке")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
+    })
+```
+
+для моделей или dto с помощью `@Schema`:  - НЕ ДЕЛАТЬ ТАК   
+```java
+@Schema(name = "Книга")
+public class BookEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(name = "Идентификатор", minimum = "0")
+    private long id;
+    @Schema(name = "Название книги")
+    private String name;
+```
+
+`Конфиг Swagger для генерации документации` не работает  
+```java
+@EnableSwagger2
+@Configuration
+public class SwaggerConfig {
+    @Bean
+    public Docket api(){
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.example"))
+                .build();
+    }
+}
+
+```
 
 `Curl` (запрос можно создать в Swagger (в браузере), Postman)  
 для тестирования на стороне клиента - просто послать сообщением команду, а клиент в командной строке может тупо ее вставить и нажать Enter.
@@ -335,6 +434,7 @@ CMD ["java", "-jar", "my-app-1.0.0.jar"]
 
 ---
 
+`Приоритезация бина`
 ```java
 @Primary //делает бин приоритетным
 ```
@@ -344,9 +444,427 @@ CMD ["java", "-jar", "my-app-1.0.0.jar"]
 @Qualifier("rockBean") //rockBean - id бина 
 ``` 
   * НО! когда используем в конструкторе, указывать рядом с входящим аргументом вот так:
-  ```java
+```java
     @Autowired
     public MusicPlayer(@Qualifier("rockBean") Music music) {
         this.music = music;
     }
-    ```
+```
+
+`Spring MVC`
+
+Предполагает архитектуру: Model - View - Contoller
+
+`Spring MVC` - один из компонентов фреймворка, который позволяет разрабатывать Web-приложения на 
+
+`Состав` Spring MVC - приложения:
+1. Java POJO (контроллеры, модели и прочее) + аннотации
+2. Набор HTML-страниц(представления). JS+HTML+CSS
+3. Spring-конфигурация (XML/аннотации или Java)
+
+Особенный компонент: `DispatcherServlet`
+
+`DispatcherServlet` - и его работа — это как раз и есть определение, что нужно пользователю. Когда диспетчер понимает, что нужно пользователю, он ищет нужную страницу среди всех контроллеров приложения (сервлетов).  
+
+**DispatcherServlet:**  
+* является входной точкой приложения
+* реализован за нас командой Spring
+
+`Tomcat` - контейнер сервлетов для обработки запросов  
+
+`Работа сервлетов:`  
+![сервлеты и MVC-приложение](images/tomcat_servlets_working.png)
+
+`Фильтр` - содержит Spring Security, определяет, стоит ли предоставлять те или иные данные.  
+
+Интерфейс фильтра лежит в библиотеке **Jakarta**     
+Чтобы создать фильтр - имплементировать интерфейс Filter  
+
+**методы фильтра:**  
+```java
+filterChain.doFilter(servletRequest, servletResponse); //пробросить дальше
+```
+
+**пример фильтра:**  
+```java
+@Slf4j
+@Component
+public class MyFilter implements Filter {
+    @Override
+    public void doFilter(ServletRequest servletRequest,
+                         ServletResponse servletResponse,
+                         FilterChain filterChain) throws IOException, ServletException {
+        if (servletRequest instanceof HttpServletRequest httpServletRequest){
+            String uri = httpServletRequest.getRequestURI(); //к какому ресурсу хотят получить запрос
+            log.info("Входящий запрос: {}", uri);
+
+            if(uri.contains("admin")){
+                ((HttpServletResponse) servletResponse).sendError(403, "Forbidden");
+            } else{
+                filterChain.doFilter(servletRequest, servletResponse);
+            }
+        } else {
+            filterChain.doFilter(servletRequest, servletResponse);
+        }
+    }
+}
+```  
+
+`Жизненный цикл бина:`
+1. Запуск приложения
+2. запускается Spring-контейнер
+3. создается объект бина
+4. в бин внедряются зависимости
+5. вызывается указанный init-method
+6. бин готок к использованию
+7. вызывается указанный destroy-method
+8. остановка Spring-приложения
+
+`Специальные методы бинов`
+* init-method (@PostConstruct) - метод, вызываемый при создании бина. Обычно это: инициализация ресурсов, обращение к внешним файлам и запуск БД
+* destroy-method (@PostDestroy или @PreDestroy) - метод, вызываемый при уничтожении бина (завершении работы приложения). Обычно это: очищение ресурсов, закрытие потоков ввода-вывода, закрытие доступа к БД.  
+
+> Для бинов с scope=prototype - метод уничтожения (destroy) вызван не будет  
+
+* factory method - фабричный метод для создания объектов класса //см. NOTEBOOK
+для бинов с scope=singletone - вызовется лишь единожды
+
+`Особенности init и destroy:`
+* любой модификатор доступа
+* тип возвращаемого значения - любой. Но чаще всего void
+* название методов - произвольное
+* не может принимать аргументы на вход
+
+@PostConstruct - `init-method` (особенности выше) главное - не должны принимать методы и чаще всего это void
+
+@PostDestroy/@PreDestroy - `destroy-method` (особенности выше) главное - не должны принимать методы и чаще всего это void. **Не сработает для prototype**
+
+При прохождении **жизненного цикла приложения**, интересные `события (Events)`: 
+На них можно как-то подписаться:   
+1. ContextRefreshedEvent - когда создались бины
+```java
+@EventListener(ContextRefreshedEvent.class)
+//здесь какой-то метод
+```
+2. ApplicationReadyEvent - когда приложение полностью готово к работе  
+```java
+@EventListener(ApplicationReadyEvent.class)
+```
+
+`Создать слушателя событий (EventListener)`    
+**1 вариант** (событие в аннотации)  
+```java
+    @EventListener(ApplicationReadyEvent.class)
+    public void myEventHandler(){
+        //do something
+    }
+```
+**2 вариант** (событие в методе) - можно что-то извлекать из ивента:    
+```java
+    @EventListener
+    public void myEventHandler(ApplicationReadyEvent event){
+        //do something
+    }
+```
+
+`Создать свое событие (Event)`  
+
+Нужно создать: 
+1. класс-событие, наследуемый от ApplicationEvent  
+2. и класс-издатель  
+```java
+//класс-событие
+public class MyEvent extends ApplicationEvent {
+    public MyEvent(Object source) { //source - объект, который вызвал событие
+        super(source);
+    }
+}
+
+//класс-издатель
+@Component
+public class MyPublisher {
+    ApplicationEventPublisher publisher;
+
+    public MyPublisher(ApplicationEventPublisher publisher) {
+    this.publisher = publisher;
+    }
+
+    public void postConstruct(){
+        publisher.publishEvent(new MyEvent(this));
+    }
+}
+//после этого можно подписываться на событие через @EventListener(MyEvent.class) и в коде вызывать метод публикации
+```
+
+`Слои (директории)` в Spring-приложении:  
+1. контроллеры (controllers, api)
+2. сервисы, логика приложения (services)
+3. репозитории (repository, dao)
+4. сущности (entity, model)
+5. служебные (util)
+6. data transfer object (dto) 
+7. конфигурация проекта (config) - класс помечается `@ConfigurationProperties`  
+
+Получить `значение переменной из application.yml` (через Environment)  
+![переменная среды Spring](images/value_from_app_yml.png)
+можно еще указать дефолтное значение, если переменная отсутствует:  
+```java
+Integer maxAllowedBooks = environment.getProperty("${application.issue.max-allowed-books:1}", Integer.class); //1 - дефолтное значение
+```
+
+---
+
+### Spring Data
+
+> эта история сама создает необходимые таблицы под сущности!!  
+
+`Spring Data` - это слой абстракции, который построен поверх JPA (или других технологий доступа к данным), и который автоматизирует много общего кода, который нам пришлось бы написать самим. 
+
+Левая инфа:   
+`NoSQL` (Not Only SQL) базы данных – это тип баз данных,
+который был разработан для обработки больших объемов
+данных, которые не могут быть эффективно обработаны
+с помощью традиционных реляционных баз данных.  
+**(MongoDB, Cassandra и Redis)**
+
+**Spring Data Commons** - основной модуль Spring Data. Он предоставляет общие интерфейсы и классы, которые используются всеми остальными модулями Spring Data. 
+
+`Spring Data JPA` – это модуль, который предоставляет 
+поддержку для работы с SQL базами данных через JPA.
+
+`Spring Data MongoDB` позволяет нам работать
+с документами MongoDB, как если бы это были
+обычные Java объекты.
+
+`Spring Data Redis` предоставляет поддержку
+для структур данных Redis, таких как списки,
+множества и отсортированные множества.
+
+Репозитории в `Spring Data` – это как магазины
+данных для ваших Java объектов.
+
+`Создать CRUD-репозиторий Spring Data`:  
+![репозиторий в Spring Data](images/spring_data_repository.png)  
+У него есть findAll, который возвращает **Iterable**, а не коллекцию
+Чтобы `преобразовать Iterable в List`:  
+```java
+Iterable<User> iterable = dao.findAll();
+StreamSupport.stream(iterable.spliterator(), false).toList();
+```
+
+`Создание JPA-репозитория Spring Data:`  
+![реализация jpa-репо](images/spring_data_jpa_repository.png)  
+**JpaRepository** предоставляет нам множество полезных методов,
+таких как findAll(), findById(), save(), delete(), и т.д., без необходимости их реализовывать.  
+
+Создать **метод для JPA-репозитория**: достаточно просто объявить его сигнатуру в интерфейсе!!!!  
+```java
+public interface UserRepository extends CrudRepository<User, Long>{
+    List<User> findByName(String name); //будет работать без реализации
+}
+```  
+
+`Создание метода с сложным запросом`  
+
+С помощью `@Query`  
+![query запрос в Spring Data](images/spring_data_query_repo.png)
+
+`Магия JPA-репозитория` базируется на названии метода, в соответствии с [документацией](https://docs.spring.io/spring-data/jpa/reference/repositories/query-keywords-reference.html)   
+
+`Базовый пример конфига Spring Data с помощью Java:`  
+![jpa-конфиг](images/spring_data_jpa_config.png)  
+● @EnableJpaRepositories: Эта аннотация активирует создание репозиториев Spring Data.   
+● @EnableTransactionManagement: Эта аннотация включает поддержку управления транзакциями Spring.   
+
+Пример `конфига Spring Data с помощью application.yml`  
+![конфиг спринг дата через yml](images/spring_data_application_yaml_config.png)
+
+● **spring.datasource**: Здесь мы указываем параметры подключения к базе данных,
+такие как URL, имя пользователя и пароль.  
+● **spring.jpa.hibernate.ddl-auto**: Этот параметр определяет, как Hibernate должен управлять схемой базы данных. (**update** - если таблицы не соответствуют - будут подогнаны под сущности в коде)  
+  * может быть еще **validate** (очень часто) - проверка соответствия сущностей структуре таблиц в БД  - приложение не запустится, если не соответствует
+  * **create** - при запуске создат таблицы
+  * **create-drop** (редко) - при запуске создат, при остановке - уничтожит таблицы
+● **spring.jpa.show-sql**: Если этот параметр установлен в true, Hibernate будет
+показывать SQL запросы, которые он выполняет.  
+Может еще понадобится **driver-class-name**:  
+```java
+driver-class-name: com.mysql.jdbc.Driver
+```
+
+`Собрать приложение (проект) Spring для работы с БД`  
+● **Spring Web**: Для создания веб-приложения с использованием Spring MVC.  
+● **Spring Data JPA**: Для работы с базой данных через JPA.  
+● **Thymeleaf**: Для создания веб-страниц нашего приложения.  
+● **Spring Boot DevTools**: Для автоматической перезагрузки приложения при изменении кода.  
+● **PostgreSQL**: Драйвер для нашей базы данных. Мы будем использовать postgres.  
+
+В случае, когда нужно `обработать отрицательный случай обработки запроса`, но с **сообщением**:  
+```java
+throw new ResponseStatusException(HTTPStatus.NOT_FOUND, "Не удалось что-то там");
+//само исключение обработается внутри DispatcherServlet
+```
+И!!! добавить в application.yml (для включения сообщения об ошибке в тело ответа):  
+```yml
+server.error.include-message = ALWAYS
+```
+
+`Spring Data JDBC` - надстройка над JDBC, позволяющая не создавать коннекты и не делать стейтмены   
+Пример использования:  
+```java
+		ConfigurableApplicationContext context = SpringApplication.run(SpringDataSeminarApplication.class, args);
+
+		JdbcTemplate jdbcTemplate = context.getBean(JdbcTemplate.class);
+
+		jdbcTemplate.execute("create table users(id bigint, name varchar(250))");
+		jdbcTemplate.execute("insert into users (id, name) values (1, 'Коля')");
+
+		List<User> users = jdbcTemplate.query("select * from users", new RowMapper<User>() {
+			@Override
+			public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+				return new User(rs.getLong("id"), rs.getString("name"));
+			}
+		});
+```
+
+`H2 - временная БД`  
+конфиг h2:  
+```yml
+  datasource:
+    url: jdbc:h2:mem:test
+    username: root
+    password:
+    driver-class-name: org.h2.Driver
+```
+Зависимость h2:  
+```xml
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+```
+
+`BPP` - бин пост процессор - для имплементации при реализации классов, которые должны быть реализованы при создании бинов, перед инит методом и перед дестрой методом. (например, при создании своей кастомной аннотации)
+
+`@ConfigurationProperties(applicatoin.issue)`  - для использования параметров конфигурации в application.yml  
+Чтобы пользоваться, нужно:  
+`@Component`  и зависимость  
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-configuration-processor</artifactId>
+</dependency>
+```
+
+`@ConfigurationProperties`  
+```java
+//всего этого достаточно
+@ConfigurationProperties("application.issue")
+@Component
+@Data
+public class IssueConf {
+    private int maxAllowedBooks;
+
+    @EventListener(ContextRefreshedEvent.class)
+    private void postInit(){
+        System.out.println("max allowed books in IssueConf-class: " + maxAllowedBooks);
+    }
+}
+```
+
+`@Valid` - для валидации объектов в контроллерах, проверки @NotNull полей.  
+чтобы пользоваться, нужна зависимость:  
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+Для `периодического выполнения методов`:  
+```java
+//над классом
+@EnableScheduling
+//над методом
+@Scheduled(fixedDelay = 1000, initialDelay = 0) //для периодического выполнения
+```
+
+---
+
+### Свой стартер
+
+`Свой стартер`  
+1. Создать отдельный модуль со своими зависимостями (spring boot web starter + lombok достаточно)
+2. Реализовать логику
+3. Создать @Configuration класс и добавить необходимые бины, которые должны подниматься в других проектах
+4. в resource создать папку META-INF -> в ней папку spring -> файл "org.springframework.boot.autoconfigure.AutoConfiguration.imports" - ровно так
+5. в нем построчно указать файлы, которые необходимо импортировать в другие проекты (например, файл конфигурации)
+  * ru.gb.httploggerstarter.HTTPLoggerAutoConfiguration
+
+Для добавления возмоности `конфигурации стартера из application.yml` проекта:  
+
+Создать `класс параметра, который будет конфигурироваться:`  
+```java
+/**
+ * Параметр с возможностью конфигурации стартера через application.yml
+ */
+@Getter
+@Setter
+@ConfigurationProperties(value = "http.logging")
+public class LoggingProperties {
+
+    /**
+     * Уровень логирования
+     */
+    private Level logLevel = Level.DEBUG; //значение по умолчанию
+}
+```
+
+В конфигурации `создать бины классов, использующих параметры`:
+```java
+@Configuration
+@EnableConfigurationProperties(LoggingProperties.class) //подключает ConfigurationProperties - класс
+public class HTTPLoggerAutoConfiguration {
+    @Bean
+    LoggerFilter loggerFilter(LoggingProperties loggingProperties){
+        return new LoggerFilter(loggingProperties);
+    }
+}
+```
+
+Сам `класс, использующий параметры:`  
+```java
+@Component
+@Slf4j
+@RequiredArgsConstructor
+public class LoggerFilter implements Filter {
+
+    private final LoggingProperties loggingProperties;
+
+    //...реализация
+}
+```
+
+Теперь, можно `конфигурировать стартер`:  
+```yml
+http:
+  logging:
+    log-level: info
+```
+
+`@ConditionalOnMissingBean` / `@ConditionalOnProperty`  
+Использовать другой бин при отсутствии данного / использовать бин при наличии конфига для него в файле application.yml  
+```java
+    @Bean
+    @ConditionalOnProperty(value = "http.logging.log-level") //если пользователь устанавливает конфиг, то этот бин будет создан
+    LoggerFilter loggerFilter(LoggingProperties loggingProperties){
+        return new LoggerFilter(loggingProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(value = LoggerFilter.class) //будет создан, если пользователь не установил конфиг для бина LoggerFilter
+    LoggerFilterStub createLoggerStub(){
+        return new LoggerFilterStub();
+    }
+```

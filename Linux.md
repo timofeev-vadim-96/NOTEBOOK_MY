@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 # LINUX
 
 пароль Ubuntu/root = lokation
@@ -1769,3 +1773,49 @@ javac -sourcepath ./src -d out src/ru/gb/.../Main.java
 * образ ОС + JDK = bellsoft/liberica-openjdk-alpine
 
 > Если вы обращаетесь к сайту по протоколу HTTPS (Secure Hypertext Transfer Protocol), то по умолчанию взаимодействие будет происходить через порт 443. Если вы не указали порт в URL, то браузер будет использовать 443 порт для установления защищенного соединения.
+
+Пример `docker-compose с общей сетью`, ip-придуман  
+```yml
+version: '3.3'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres
+    command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwerty
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+       - ./ca/server.crt:/var/lib/postgresql/server.crt
+       - ./ca/server.key:/var/lib/postgresql/server.key
+    ports:
+      - "5432:5432"
+    networks:
+      supernetwork:
+       ipv4_address: 172.20.0.5
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bot_container
+    networks:
+      supernetwork:
+        ipv4_address: 172.20.0.6
+    depends_on:
+      - postgres
+
+
+networks:
+  supernetwork:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+    postgres:
+```

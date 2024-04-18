@@ -1,3 +1,6 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
 
 # SQL  
 
@@ -167,7 +170,8 @@ Postgresql
   * UPDATE customers set secondname = 'Леницкая' where id = 2;
   * UPDATE customers set age = age - 5; //изменяем сразу все строки в табличке
   * UPDATE table set column = case ... //заполнение через кейс
-* DELETE - полное удаление
+  * UPDATE Timepair SET start_pair = ADDTIME(start_pair, '00:30:00'), end_pair = ADDTIME(end_pair, '00:30:00'); //прибавить время в ячейке типа TIME
+* DELETE - полное удаление (удалить)
   * delete from customers where firstname = 'Снежана';
 * SELECT - выборка данных
   * SELECT * FROM tablename
@@ -179,6 +183,8 @@ Postgresql
   * Select * from student where name like 'A%'; - а в начале
   * ... like '%A%' A - в любом месте
   * ... like 'A_ _' - всего 3 символа, начинается с А
+* LENGTH - длина слова
+  * select name from Passenger where LENGTH(name) = (SELECT MAX(LENGTH(name)) FROM Passenger) //вывести имена с наибольшей длиной  
   
 * SHOW DATABASES; //посмотреть список всех баз данных
 * SHOW TABLES; //посмотреть все таблицы в текущей базе данных
@@ -426,7 +432,7 @@ SELECT ... FROM table WHERE ... GROUP BY... HAVING ... ORDER BY ...
   * select manufacturer, count(*) from phones group by manufacturer having count(*) > 1; //здесь мы выводим количество моделей у производителей и затем прогоняем через еще один фильтр HAVING, где отсеиваем фирмы с кол-вом менее 1
   * select manufacturer, count(*) as models, sum(quantity) as Units from phones group by manufacturer having Units > 5 order by Units DESC; //sum(quantity) - суммарное количество единиц телефонов данного производителя
  
-* `Приоритет операций в SQL:`
+* `Приоритет (порядок, последовательность) операций в SQL:`
 1. FROM, включая JOINs
 2. WHERE
 3. GROUP BY
@@ -805,6 +811,11 @@ Union
 Select Col1, Col2, Col3, Null as Col4, Null as Col5 from Table2 //за счет Null значения
 
 
-
+Применение `переменных и форматирование даты`:  
+```sql
+SET @second_pair = (SELECT start_pair FROM Timepair WHERE id = 2);
+SET @fourth_pair = (SELECT end_pair FROM Timepair WHERE id = 4);
+SELECT TIME_FORMAT(TIMEDIFF(@fourth_pair, @second_pair), '%H:%i:%s') as time;
+```
 
 

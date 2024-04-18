@@ -1,5 +1,12 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 > лицензии для Intellia Idea
 https://github.com/superbeyone/JetBrainsActiveCode/blob/master/licenses/2023/2023-12-22.md
+
+`Гайд по активации:`  
+https://306.antroot.ru/jetbrains-activation  
 
 > Если лицензия не встает: включить прокси
 ![включить_прокси](images/proxy_turn_on.png)

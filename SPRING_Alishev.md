@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 Alishev - youtube
 Евгений Манько - geegBrains
 
@@ -705,7 +709,7 @@ CRUD-APP стандарт адресов (из стандарта REST):
 <body>
 <div th:each="person : ${people}"> <!--цикл-->
     <th:block>
-        <a th:href="@{/people/{id}(id=${person.getId()})}" th:text="${person.getName()}">user</a> <!--создаст ссылку по айди из геттера с именем пользователя, тоже из геттера>
+        <a th:href="@{/people/{id}(id=${person.getId()})}" th:text="${person.getName()}">user</a> <!--создаст ссылку по айди из геттера с именем пользователя, тоже из геттера-->
     </th:block>
 </div>
 </body>

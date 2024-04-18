@@ -1,3 +1,7 @@
+> [НАЗАД к СОДЕРЖАНИЮ](README.md)
+
+---
+
 # Unit-тесты
 
 Преподаватель - Илья Смотров. Руководитель отдела тестирования компании "Аэро" в подразделении консалтинга
@@ -440,7 +444,10 @@ when(hotelService.isRoomAvailable(anyInt())).thenAnswer(i -> ( Integer)i.getArgu
 для JUnit5 - @ExtendWith(MockitoExtension.class)
 для JUnit4 - @RunWith(MockitoJUnitRunner.class)
 
+еще можно: Mockito.spy(объект, за которым слидим (не класс))
+
 Пример полноценного теста и использованием `Mockito`:
+```java
     @Test
     public void iteratorMightSayHelloWorld(){
         Iterator iterator = mock(Iterator.class); //создали мок-объект
@@ -450,6 +457,17 @@ when(hotelService.isRoomAvailable(anyInt())).thenAnswer(i -> ( Integer)i.getArgu
 
         assertEquals("Hello World", result);
     }
+```
+
+`donothing` пример:
+```java
+doNothing().when(bot).sendMessage(anyLong(), anyString());
+```
+
+`doThrow` пример: (если void метод должен что-то выбросить)
+```java
+Mockito.doThrow(RuntimeException.class).when(auto).changeWheels();
+```
 
 
 Для тестирования в поведенческом паттерне: import static org.mockito.BDDMockito.*;
