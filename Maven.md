@@ -224,6 +224,33 @@
         </plugins>
     </build>
 
+<!--плагн для тестирования ВСЕГО ПРОЕКТА + LOMBOK-->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.7.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <excludes>
+                        <exclude>org.projectlombok:lombok</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 ```
 
 `groupId, artifactId и version (GAV)` - индентификаторы проекта    
@@ -297,6 +324,61 @@
             </plugin>
         </plugins>
     </build>
+
+<!--для сборки Spring-приложения в JAR-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                <!--jar можно будет запускать на винде-->
+                    <executable>true</executable>
+                </configuration>
+            </plugin>
+
+<!--правила, проверяемые при сборке проекта-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M2</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <!--запрет дупликации зависимостей в проекте-->
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+<!--ЧЕКСТАЙЛ-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>${checkstyle.config.url}</configLocation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 ```
 
 `Жизненный цикл Maven - описывает жизненный цикл разработки ПО`

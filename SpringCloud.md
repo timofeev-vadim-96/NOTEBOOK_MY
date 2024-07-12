@@ -65,15 +65,16 @@ http://localhost:8761/  - UI
 
 Конфиг `application.yml` для Eureka-СЕРВЕР:  
 ```yml
-spring:
-  application:
-    name: book_service
 server:
   port: 8761
 eureka:
+  instance:
+    hostname: localhost
   client:
-    register-with-eureka: false #само приложение СЕРВЕРА не будет зарегистрировано в сервисе Eureka
-    # fetch-registry: false #приложение не будет получать информацию о других зарегистрированных приложениях - хз зачем
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
 ```
 
 Получить приложения, зарегистрированные в Eureka:  
@@ -97,7 +98,7 @@ Application application = eurekaClient.getApplication("BOOK-SERVICE");
 Подключить клиент к Eureka:  
 ```java
 //над основных классом Application
-@EnableEurekaClient //не работает!!!
+@EnableDiscoveryClient //от сельского джависта
 ```
 
 Конфиг `application.yml` для Eureka-КЛИЕНТ: 

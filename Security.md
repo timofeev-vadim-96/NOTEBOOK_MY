@@ -30,21 +30,15 @@
 3. Защита от атак
 4. Шифрование паролей
 
-`JWT` (**JSON WEB TOKEN**) - это стандарт, который определяет способ безопасной передачи информации между двумя
-сторонами в виде JSON-объекта. Он зашит в Spring Security. Кроме самого факта аутентификации, в него можно зашить id пользователя и его метаданные.  
+`Базовый алгоритм аутентификации`  
+![](images/basic_auth.png)  
+**первый запрос** без параметров - не авторизован, **второй запрос** с параметрами пользователя и пароля - уже может быть авторизован и предоставлен доступ к запрашиваемому ресурсу
 
-`Алгоритм работы с JWT-токенами`:    
-В Spring Security JWT обычно используется вместе с OAuth 2.0 для аутентификации и авторизации:
-1. Пользователь аутентифицируется с помощью своих учетных данных.
-2. После успешной аутентификации сервер создает JWT, который содержит уникальные данные
-пользователя, и отправляет его обратно пользователю.
-3. Пользователь сохраняет этот JWT и отправляет его в заголовке Authorization
-с каждым последующим запросом.
-4. Сервер проверяет JWT в каждом запросе, чтобы аутентифицировать пользователя
-и определить его права доступа. 
+---
 
-`2024 Конфигурация Spring Security`:   
-https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter  
+`2024` [Конфигурация Spring Security](https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter)  
+
+`2023` [Туториал](https://www.youtube.com/watch?v=b9O9NI-RJ3o)
 
 Виды `хакерских атак`:  
 1. CSRF (межсайтовая подделка запроса) - выполнение пользователем нежелательных действий (не сознательно)
@@ -119,7 +113,28 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 ---
 
-Как делается с помощью дефолтного Spring Security `в настоящее время`:  
+Как делается с помощью дефолтного Spring Security `в настоящее время`: 
+
+`дефолтная защита` в Spinrg Security
+```java
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+
+        http
+                .authorizeHttpRequests((authz) -> authz
+                        .anyRequest()//любой запрос
+                        .authenticated()//должен быть аутентифицирован
+                )
+                .httpBasic(Customizer.withDefaults()); //дефолтная форма авторизации
+        return http.build();
+    }
+```
+
+`по дефолту`:
+- страница входа использует логин: user и пароль: сгенерированный в терминале
+- для выхода "/logout" 
+
+1. Создать конфигурационный файл, в котором включим веб-безопасность с помощью аннотации `@EnableWebSecurity`  
 
 `SecurityFilterChain` - конфиг спринга по доступу к ресурсам приложения пользователями  
 ```java
@@ -191,6 +206,17 @@ public class CustomPasswordEncoder implements PasswordEncoder {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 }
+
+//ТОЖЕ САМОЕ БУДЕТ ЕСЛИ ЧЕРЕЗ БИН
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+```
+
+Чтобы задать `PasswordEncoder, который ничего не делает`:  
+```java
+return NoOpPasswordEncoder.getInstance();
 ```
 
 ---
@@ -217,7 +243,7 @@ public class CustomPasswordEncoder implements PasswordEncoder {
 1. просто скачать и разорхивировать (возможно, может понадобится настроить переменные среды)
 2. getting started на сайте -> docker -> выполнить команду  
 ```bash
-docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:24.0.2 start-dev
+docker run -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin -v ./config/keycloak/import:/opt/keycloak/data/import quay.io/keycloak/keycloak:24.0.2 start-dev --import-realm
 ```
 
 `application.yml для работы с oath 2.0`:  
@@ -242,6 +268,9 @@ server:
 **Создать нового клиента** (клиент - это приложение) в oauth 2.0:  
 1. запускаем контейнер
 2. заходим на порт работы (дефолт=8080)
+* создаем новый realm (здесь только придумать ему название)
+* создаем необходимые группы (например, исполнители и логисты)
+* создаем новые роли (ROLE_LOGISTICAN и др.) и связываем их с группами
 3. clients -> create client
 4. general settings -> имя в id прописать
 5. capacity config -> рис. ниже (client authentication только для общения между серверами)
@@ -361,4 +390,9 @@ public class WebSecurityConfig{
     // }
 ```
 
----
+`Варианты настройки создания сессий в Spring Security`:  
+
+* SessionCreationPolicy.ALWAYS — сессия будет всегда создаваться (если она не существует).
+* SessionCreationPolicy.NEVER — Spring Security никогда не создаст HttpSession, но будет использовать его, если он уже существует (доступен через сервер приложений).
+* SessionCreationPolicy.IF_REQUIRED — Spring Security будет создавать HttpSession только при необходимости (по умолчанию).
+* SessionCreationPolicy.STATELESS — Spring Security никогда не создаст HttpSession и не будет использовать его для получения SecurityContext.

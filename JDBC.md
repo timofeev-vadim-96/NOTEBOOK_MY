@@ -20,7 +20,8 @@
 ###  Чтобы подключиться к БД в контейнере:
 
 1. поднять БД в `контейнере`
-docker run --name mysql_container -e MYSQL_ROOT_PASSWORD=lokation -p 3306:3306  -d mysql
+docker run --name mysql_container -e MYSQL_ROOT_PASSWORD=lokation -p 3306:3306  -d mysql  
+docker run --name postgres_container -e POSTGRES_PASSWORD=root -p 5432:5432 -d postgres (username по умолчанию = postgres)  
 
 либо создать в самой IDE (должно быть подключено расширение, после чего настройка -> будет доступно в сервисах):
 ![docker_creating](images/docker_container_IDE_creating.png)

@@ -7,10 +7,18 @@
 Spring TestContext Framework - основная фича Spring Testing  
 
 `@SpringBootTest` - для загрузки контекста приложения. Начинает работу с поиска класса с аннотацией @SpringBootApplication 
-`@MockBean` - мок-версия бина  
+`@MockBean` - мок-версия бина на базе контекста
 `@WebMvcTest` - для тестирования конкретных частей приложения (веб-часть - api/контроллеры)  
-`@DataJpaTest` - для тестирования jpa dao-слоя  
-`@TestConfiguration` - для определения дополнительных бинов для теста
+`@DataJpaTest` - для тестирования jpa dao-слоя. Замокает все бины, помеченные @Repository???
+`@JdbcTest` - для тестирования кастомных dao с JdbcTemplate  
+  * также выполнит schema.sql и data.sql
+  * по умолчанию в начале КАЖДОГО теста создаст транзакцию, и откатит ее в конце теста. Чтобы отключить: @Transational(propagation = Propagation.NOT_SUPPERTED/NEVER) - над классом, или @Commit - над методом, где нужно сохранить изменения в БД
+  * нужен @ExtendWith(SpringExtension.class), если старые версии Spring
+  * репозитории в контекст не поднимуются, нужно добавить через `@Import`
+`@TestConfiguration` - для определения ДОПОЛНИТЕЛЬНЫХ бинов для теста, поверх бинов в основном приложении или их ПОДМЕНЫ
+  * для ПОДМЕНЫ добавить: @TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true"), либо прописать тоже самое в application.yml  
+`@AutoConfigureTestDatabase`(replace = AutoConfigureTestDatabase.Replace.NONE) - отключить замену Postgres на H2 в тестах!
+
 
 Можно еще:  
 ```
@@ -61,14 +69,14 @@ Spring TestContext Framework - основная фича Spring Testing
 1. spring-boot-starter-test
 2. mockito-core
 
-`@TestConfiguration`  
+`@TestConfiguration`  - создаст доп. бины  
 ![](images/spring_test_configuration.png)
 
 `Unit-Тест на Spring:`  - вместо @InjectMocks здесь @Autowired
 ![](images/spring-test-example.png)
-* @RunWith - походе без контекста
+* @RunWith (Depricated) - расширение для запуска тестов - `@ExtendWith` в JUnit5. НЕ НУЖНО ПИСАТЬ, ЕСТЬ ВНУТРИ @SpingBootTest
 * @InjectMocks - внедряет мок-объект
-* @Mock - создает мок-объект
+* @Mock - создает мок-объект, не связано с контекстом СПРИНГА!
 * MockitoAnnotations.initMocks - инициализация мок-объектов
 
 `Интеграционнный тест на Sping:`  
@@ -78,7 +86,7 @@ Spring TestContext Framework - основная фича Spring Testing
 Пример работающего теста с помощью Spring-test:  
 ```java
 @SpringBootTest
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class) //есть внутри @SpringBootTest
 class ReaderControllerTest {
     @Autowired
     private ReaderController readerController;
@@ -140,6 +148,15 @@ public class WebSecurityTestConfig {
 > Чтобы не поднимать контекст приложения с помощью @SpringBootTest в каждом новом классе, можно создать единственный класс с этой аннотацией, и наследовать все тестовые классы от него
 
 `WebTestClient` - подключить webflux - для тестирования API/Контроллеров
+
+`Зависимость` 
+```xml
+<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+```
+
 ```java
 //mono
         ReaderEntity response = webTestClient.get()
@@ -159,4 +176,93 @@ public class WebSecurityTestConfig {
                 })
                 .returnResult()
                 .getResponseBody();
+```
+
+`@TestInstance` - создает общий экземпляр класса для всех тестов
+```java
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+```
+
+Как поднять не весь контекст приложения для тестирования:  
+- Разместить класс, помеченный @SpringBootApplication/@SpringBootConfiguration (Евгений Борисов 2017г.) в корне тестового проекта (шляпа)
+- Разместить внутри тестового класса статический внутренний класс, помеченный @Configuration + @ComponentScan("путь туда, где лежат нужные бины в соурсе")
+- @Import(Someclazz.class) - но у бина должно быть задано имя вручную, типа @Component("someName")
+- @SpringBootTest(classes = {SomeClazz.class})
+- @SpringBootTest/@DataJpaTest/@WebMvcTest... + @ContextConfiguration(classes = {SomeTestConfiguration.class}) - сработает в чистом Спринге. В контекст конфиг передавать тестовый конфиг, где создаем тестовые бины
+
+> если тестовый application.yml называется кастомно, например - application_test_profile.yml, то использовать @ActiveProfiles("test_profiles")
+
+Для использования кастомного property:  
+```java
+@TestPropertySource("classpath:test.properties")
+@SpringBootTest
+```
+
+> SpringBootTest может кэшировать похожие бины, поэтому их состояние может передаваться между тестовыми классами. Для избежания, указывать явно необходимые бины: @SpringBootTest(classes = {.....})
+
+`ЯВНО ПЕРЕСОЗДАТЬ КОНТЕКСТ`:  
+```java
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@SpringBootTest
+```
+
+Также можно обновить контекст на уровне метода: 
+```java
+@DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+@Test
+```
+
+`Кэширование контекста`, поднимаемого для тестирования:  
+1. @SpringBootTest над каждым тестовым классом
+2. @ContextHierarchy(
+    {
+        @ContextConfiguration(classes = {перечислять классы в нужно порядке! для инъекции})
+    }
+)
+3. logging.level.org.springframework.test.context.cache=debug - больше инфы про кэшируемые бины
+4. сделай общий абстрактный класс со всеми аннотациями
+
+
+`@DataJpaTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины @Reposiroty
+
+`@WebMvcTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины @Controller
+  * добавить необходимые бины: @ContextConfiguration(classes = {SomeTestConfiguration.class})
+  * @Autowired MockMvc MockMvc - прям поле, чтобы не поднимать Tomcat
+  * чтобы замокать сервисы контроллеров - можно поставить @MockBean(class...) - на каждый сервис прямо над тестовым классом (не поле)
+
+
+`@EnableConfigurationProperties`(MinioProperties.class) - Для тестирования проперти-класса:  
+```java
+@Configuration //Включит enableConfigurationProperties
+@EnableConfigurationProperties(MinioProperties.class)
+public class MinioTestConfig {
+
+//property-класс
+    @Bean
+    @Primary
+    MinioProperties minioProperties() {
+        return new MinioProperties();
+    }
+}
+```
+
+`перед транзакцией` - для каких-то действий
+```java
+@BeforeTransactional 
+@Test
+//здесь доп. метод для действий, которые будут выполняться перед каждой транзакцией
+```
+
+`после транзакции` - для каких-то действий
+```java
+@AfterTransactional
+@Test
+//здесь доп. метод для действий, которые будут выполняться после каждой транзакции
+```
+
+принудительно `завиксировать транзакцию в тестах с @JdbcTest`
+```java
+@Commit
+//или
+@Rollback(value = false)
 ```

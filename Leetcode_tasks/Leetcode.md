@@ -18,6 +18,7 @@
 [28. Find the Index of the First Occurrence in a String](FirstIndexOfSubstring.java)   
 [34. Find First and Last Position of Element in Sorted Array](\FindFirstAndLastPositionOfElementInSortedArray.java) (Medium)    
 [35. Search Insert Position](\SearchInsertPosition.java)    
+[58. Length of Last Word](\LengthOfLastWord.java)  
 [88. Merge Sorted Array](\MergeTwoSortedArrays.java)  
 [101. Symmetric Tree](\SymmetricTree.java)  
 [121. Best Time to Buy and Sell Stock](\MaxProfit.java)  

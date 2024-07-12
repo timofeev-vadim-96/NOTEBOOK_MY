@@ -818,4 +818,7 @@ SET @fourth_pair = (SELECT end_pair FROM Timepair WHERE id = 4);
 SELECT TIME_FORMAT(TIMEDIFF(@fourth_pair, @second_pair), '%H:%i:%s') as time;
 ```
 
-
+INSERT с возвращением сгенерированного ID:  
+```sql
+String sql = "insert into books (title, author_id) values (:title, :authorId) returning id";
+```  

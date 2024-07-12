@@ -71,9 +71,25 @@ Spring берет все наши классы как бы из контейне
 @Scope - задает то, КАК Spring будет создавать бины  
 Виды scope:   
 * Чаще всего - Singleton - по умолчанию. При всех вызовах getBean() - возвращается один и тот же объект //используетяс тогда, когда у нашего бина нет изменяемых состояний (свойств)
-* Prototype - создает новый объект каждый раз при вызове getBean() //используется тогда, когда у бина есть изменяемые состояния (stateful)
-* Request, Session, Application. Бин области видимости Request создается для каждого HTTP-запроса
-* Web-socker - область видимости для бинов, связваемых в жизненном цикле web-socket
+* Prototype - создает новый объект каждый раз при вызове getBean() //не до конца решает вопрос многопоточности - реально помогает лишь не шарить уникальное состояние. Практически используется в КЭШЭ (p.s. если запроксировать с помощью proxyMode = ScopeProxyMode.INTERFACES, то будет вести себя как Request)
+* Request - создается и живет в рамках каждого HTTP-запроса - использовать для хранения временных данных, данных о пользователе, сообщений об ошибках
+* Session - тоже самое, только в рамках HTTP-сессии (корзина покупок, настройки пользователя или информация о входе в систему)
+* Web-socket - область видимости для бинов, связваемых в жизненном цикле web-socket
+
+Чтобы `внедрить бин, создающийся не сразу` - можно создать его прокси при подъеме контекста:  
+```java
+@Scope(value = "session", proxyMode = ScopedProxyMode.INTERFACES)
+@Bean
+public AnyDependency anyDependency() {
+    return new AnyDependency();
+}
+
+//внедряем его в синглтон-бин
+@Bean
+public AnyService anySerivce(AnyDependency anyDep){
+    ...
+}
+```
 
 ![пример scope](images/spring_scope.png)
 
@@ -105,7 +121,10 @@ server:
 
 ✔ spring.main.banner-mode: режим баннера при запуске вашего приложения.  Вы можете отключить баннер, установив этот параметр в OFF  
 
-Чтобы достать нужные поля из конфигурационного файла, нужно пометить класс, в который достаем с помощью @ConfigurationProperties  
+Чтобы достать нужные поля из конфигурационного файла, нужно пометить класс, в который достаем с помощью `@ConfigurationProperties`  
+
+> НЕ ЗАБУДЬ СЕТТЕРЫ К ПОЛЯМ!!!
+
 ![достаем поля из файла конфигурации](images/spring_conf_properties.png)  
 Здесь prefix - **необязательный** параметр
 
@@ -116,11 +135,31 @@ server:
 
 `Использовать профиль`  
 ![активация профайла](images/spring_profiles_active.png)  
+  * можно указать НЕСКОЛЬКО профилей через запятую
 
-+ @Configuration - для конфигурации через Java-код
+Также, можно `включать каскад настроек` в зависимости от наличия профиля:  
+```yml
+condition:
+    yanis-exists: false
+spring:
+    profiles:
+        active: Oleg, Peter
+---
+spring:
+    config:
+        activate:
+            on-profile: Peter
+# перебьет конфиг, если подрублен профиль Peter
+condition:
+    yanis-exists: true
+```
+
+> Можно подрубить еще один файл конфигурации, если профиль активен. В таком случае, он должен называться application-profileName.yml
+
+`@Configuration` - для конфигурации через Java-код
 ```java
 @Configuration
-@ComponentScan("org.example") //рекурсивно сканирует все бины в указанном пакете.
+@ComponentScan("org.example") //рекурсивно сканирует все бины в указанном пакете, либо если не указан пакет - в текущем и ниже (не ищет интерфейсы)
 public class SpringConfig {
     @Bean
     public RockMusic rockMusic(){
@@ -128,6 +167,8 @@ public class SpringConfig {
     }
 }
 ```
+
+@Import(SomeClazz.class) - для импорта конерктного класса или класса-конфига, когда другие бины не нужны
 
 ### Клиент-сервер  
 
@@ -511,18 +552,28 @@ public class MyFilter implements Filter {
 ```  
 
 `Жизненный цикл бина:`
-1. Запуск приложения
-2. запускается Spring-контейнер
-3. создается объект бина
-4. в бин внедряются зависимости
-5. вызывается указанный init-method
-6. бин готок к использованию
-7. вызывается указанный destroy-method
-8. остановка Spring-приложения
+1. Создание BeanDefinition
+2. Возможность создать свои BeanDefinition(через ImportBeanDefinitionRegistrar)
+3. Пост обработка BeanDefinition
+4. Создание бинов и внедрение через конструктор
+5. Внедрение через сеттеры и поля (в т.ч. через @Value)
+6. Вызовы методов Aware-интерфейсов ????? (вроде как для инфраструктурных бинов) - не юзать (bad practice)
+7. Пост-обработка бина (1-й этап) (через BeanPostProcessor) (можно встретить прокси при работе с бинами)
+8. Вызов методов инициализации (@PostConstruct, InitializingBean, Custom init method (@Bean))
+9. Пост-обработка бина (2-й этап) (через BeanPostProcessor)
+10. Бин готов к работе
+11. Завершение работы
+12. Вызов методов деинициализации (@PreDestroy, DisposableBean, Custom destroy method (@Bean))
+  * Prototype не поддерживает @PreDestroy
 
 `Специальные методы бинов`
 * init-method (@PostConstruct) - метод, вызываемый при создании бина. Обычно это: инициализация ресурсов, обращение к внешним файлам и запуск БД
+  * аналог - имплементировать InitializingBean и реализовать единственный метод 
+  afterPropertiesSet()
+  * аналог - @Bean(initMethod = "anyInitMethodName")
 * destroy-method (@PostDestroy или @PreDestroy) - метод, вызываемый при уничтожении бина (завершении работы приложения). Обычно это: очищение ресурсов, закрытие потоков ввода-вывода, закрытие доступа к БД.  
+  * аналог - имплементировать DisposableBean и реализовать destroy()
+  * аналог - @Bean(destroyMethod = "anyDestroyMethodName")
 
 > Для бинов с scope=prototype - метод уничтожения (destroy) вызван не будет  
 
@@ -603,13 +654,24 @@ public class MyPublisher {
 4. сущности (entity, model)
 5. служебные (util)
 6. data transfer object (dto) 
-7. конфигурация проекта (config) - класс помечается `@ConfigurationProperties`  
+7. конфигурация проекта (config) - класс помечается `@ConfigurationProperties` (внутри)
+8. mapper/converter
 
 Получить `значение переменной из application.yml` (через Environment)  
 ![переменная среды Spring](images/value_from_app_yml.png)
 можно еще указать дефолтное значение, если переменная отсутствует:  
 ```java
 Integer maxAllowedBooks = environment.getProperty("${application.issue.max-allowed-books:1}", Integer.class); //1 - дефолтное значение
+```
+
+Значение переменной из application.yml через `@Value` - ВЕШАТЬ К ПЕРЕМЕННЫМ В КОНСТРУКТОРЕ, А НЕ НАД ПОЛЕМ! (ТЕСТИРОВАНИЕ)  
+```java
+@Value("${application.security.jwt.SECRET_KEY}")
+    private  String SECRET_KEY;
+```
+МОЖЕТ ПОНАДОБИТСЯ ЗАЮЗАТЬ `@PropertySource`, если не Spring Boot!
+```java
+@PropertySource("classpath:application.properties")
 ```
 
 ---
@@ -681,7 +743,7 @@ public interface UserRepository extends CrudRepository<User, Long>{
 
 ● **spring.datasource**: Здесь мы указываем параметры подключения к базе данных,
 такие как URL, имя пользователя и пароль.  
-● **spring.jpa.hibernate.ddl-auto**: Этот параметр определяет, как Hibernate должен управлять схемой базы данных. (**update** - если таблицы не соответствуют - будут подогнаны под сущности в коде)  
+● **spring.jpa.hibernate.ddl-auto**: Этот параметр определяет, как Hibernate должен управлять схемой базы данных. (**update** - если таблицы не соответствуют - будут подогнаны под сущности в коде, **create** - создаст, если еще не создано)  
   * может быть еще **validate** (очень часто) - проверка соответствия сущностей структуре таблиц в БД  - приложение не запустится, если не соответствует
   * **create** - при запуске создат таблицы
   * **create-drop** (редко) - при запуске создат, при остановке - уничтожит таблицы
@@ -710,6 +772,7 @@ server.error.include-message = ALWAYS
 ```
 
 `Spring Data JDBC` - надстройка над JDBC, позволяющая не создавать коннекты и не делать стейтмены   
+JdbcTemplate - ботокобезопасен  
 Пример использования:  
 ```java
 		ConfigurableApplicationContext context = SpringApplication.run(SpringDataSeminarApplication.class, args);
@@ -727,14 +790,80 @@ server.error.include-message = ALWAYS
 		});
 ```
 
+> Для выполнения SQL команд INSERT, UPDATE, DELETE использовать jdbcTemplate.update()
+
+Пример `jdbcTemplate.query()` с маппингом:  
+```java
+    public Map<String, StatisticByCompanyDto> getCompaniesStatisticsToday() {
+        Map<String, StatisticByCompanyDto> companyStatistics = new HashMap<>();
+        String formattedDate = getFormattedToday();
+
+        jdbcTemplate.query("select company_name, event, count(*)\n" +
+                        "from (select companies.company_name                                       as company_name,\n" +
+                        "             te.event                                                     as event,\n" +
+                        "             row_number() over (partition by trips.id order by time desc) as rn\n" +
+                        "      from trip_events as te\n" +
+                        "               inner join trips\n" +
+                        "                          on te.trip = trips.id\n" +
+                        "               inner join tasks\n" +
+                        "                          on trips.task = tasks.id\n" +
+                        "               inner join companies\n" +
+                        "                          on tasks.company = companies.id\n" +
+                        "      where te.time > " + formattedDate +
+                        ") as res\n" +
+                        "where res.rn = 1\n" +
+                        "group by company_name, event;",
+                (rs, rowNum) -> {
+                    mapToStatisticByCompany(rs, companyStatistics);
+                    return null;
+                });
+        return companyStatistics;
+    }
+```
+
+queryForObject через `NamedParameterJdbcOperations`:  
+```java
+private final NamedParameterJdbcOperations jdbc;
+
+//конструктор...
+
+public Entity getById(long id) {
+    final Map<String, Object> params = new HashMap<>();
+    params.put("id", id);
+    return jdbc.queryForObject("select * from entities where id = :id", 
+    params, new PersonMapper()); //параметры просто хранятся в мапе по именам, в тексте будет :paramName
+}
+```
+
+`NamedParameterJdbcOperations`
+```java
+    public List<Genre> findAllByIds(Set<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        String sql = "SELECT * FROM genres WHERE id IN (:ids)";
+
+        return jdbc.query(sql, new MapSqlParameterSource("ids", ids), new GenreRowMapper());
+    }
+```
+
 `H2 - временная БД`  
 конфиг h2:  
 ```yml
+spring:
   datasource:
     url: jdbc:h2:mem:test
     username: root
     password:
     driver-class-name: org.h2.Driver
+#для инициализации schema.sql и data.sql
+  sql:
+    init:
+      mode: always
+      data-locations: data.sql //здесь прописывать инсерты
+      schema-locations: schema.sql //здесь прописывать создание таблиц
+
 ```
 Зависимость h2:  
 ```xml
@@ -773,6 +902,8 @@ public class IssueConf {
 }
 ```
 
+@ConfigurationProperties("application") - использовать с @ConstructorBinding над конструктором, чтобы поля сделать **final**
+
 `@Valid` - для валидации объектов в контроллерах, проверки @NotNull полей.  
 чтобы пользоваться, нужна зависимость:  
 ```xml
@@ -780,6 +911,11 @@ public class IssueConf {
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-validation</artifactId>
 </dependency>
+```
+@Valid
+```java
+    @PostMapping("/example")
+    public ResponseEntity<Object> create(@Valid @RequestBody ExampleRequest request) {
 ```
 
 Для `периодического выполнения методов`:  
@@ -801,6 +937,9 @@ public class IssueConf {
 4. в resource создать папку META-INF -> в ней папку spring -> файл "org.springframework.boot.autoconfigure.AutoConfiguration.imports" - ровно так
 5. в нем построчно указать файлы, которые необходимо импортировать в другие проекты (например, файл конфигурации)
   * ru.gb.httploggerstarter.HTTPLoggerAutoConfiguration
+6. mvn clean install
+7. импортировать по полному имени в нужный проект
+8. если не видит либу - project structure - modules - добавлять вручную
 
 Для добавления возмоности `конфигурации стартера из application.yml` проекта:  
 
@@ -824,7 +963,7 @@ public class LoggingProperties {
 В конфигурации `создать бины классов, использующих параметры`:
 ```java
 @Configuration
-@EnableConfigurationProperties(LoggingProperties.class) //подключает ConfigurationProperties - класс
+@EnableConfigurationProperties(LoggingProperties.class) //подключает @ConfigurationProperties - класс - вроде как работает без Enable...
 public class HTTPLoggerAutoConfiguration {
     @Bean
     LoggerFilter loggerFilter(LoggingProperties loggingProperties){
@@ -868,3 +1007,70 @@ http:
         return new LoggerFilterStub();
     }
 ```
+
+`@RequestScope` - бин, живущий в рамках 1 HTTP-запроса
+
+Condition-аннотации - вешаются над @Bean
+
+`@ConditionalOnProperty` - определение какой бин выбрать на основе application.yml
+```java
+@ConditionalOnProperty(prefix = "example", name = "someName", matchIfMissing = true, havingValue = "false") //кроме прочего - используем эту реализацию, если такого конфига в файле нет совсем
+```
+
+`@ConditionalOnClass` - если есть такой класс в класспассе, то бин создатся
+```java
+@ConditionalOnClass(CustomCondition.class)
+```
+
+`@ConditionOnMissingBean` - бин создатся, если такого бина еще нет в контексте
+
+Зависимость от кастомных условий `@Conditional`(SomeClass.class):  
+```java
+/**
+ * Этот бин будет создан, если соблюдены ВСЕ условия в классе кастомных условий
+ */
+@Component
+@Conditional(CustomCondition.class)
+public class SomeBean {
+}
+
+/**
+ * Кастомные условия (несколько)
+ * AllTestedConditions - для соблюдения всех условий
+ */
+public class CustomCondition extends AllNestedConditions {
+    public CustomCondition(ConfigurationPhase configurationPhase) {
+        super(configurationPhase.PARSE_CONFIGURATION);
+    }
+
+    @ConditionalOnProperty(name = "condition.alexey-exists", havingValue = "false")
+    static class AlexeyDoesNotExistsCondition {
+    }
+
+    @ConditionalOnProperty(name = "condition.yanis-exists", havingValue = "true")
+    static class YanisExistsCondition {
+    }
+}
+```
+
+`AnyNestedConditions` - для соблюдения одного из условий  
+
+**Когда НЕ использовать профили**:  
+* для формирования контекста в интеграционных тестах
+* для загрузки свойств из нужного файла в интеграционных тестах. application.yml в тестовых ресурсах ПЕРЕОПРЕДЕЛЯЕТ основной
+* @ActiveProfile нужен для тестирования профиля приложения, а не для включения профиля тестирования
+
+`KeyHolder` - для ловли сгенерированного id базой данных в связке с jdbcTemplate  
+![](images/keyHolder_jdbcTemplate.png)
+  * id - название колонки идентификатора
+  * в конце забираем сгенерированный ключ
+Используй keyholder.getKeys() - для получения мапы ключей 
+
+`Spring boot starter jdbc` - что делает:  
+* поднимает DataSource
+* создает JdbcOperations
+* и NamedParatererJdbcOperations
+* подключает транзакционность
+* автоматически выполняет файлы schema.sql, data.sql
+
+`@SuppressWarnings`({"SpellCheckingInspection", "unused"}) - для подавления `Предупреждений`  

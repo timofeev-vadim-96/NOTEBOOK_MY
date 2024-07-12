@@ -685,3 +685,11 @@ public class MyTestClass
             </plugin>
         </plugins>
     </build>
+
+`Thrown/ThrowBy/Бросает/Исключение`  
+```java
+        assertThatExceptionOfType(ResponseStatusException.class)
+                .isThrownBy(() -> driverService.getDriversTasks(anyLong(), anyString()))
+                .withMessageContaining("400")
+                .withMessageContaining(HttpStatus.BAD_REQUEST.name());
+```
