@@ -1,3 +1,4 @@
+Main OTUS repo: https://github.com/OtusTeam/Spring/tree/master
 
 XML-конфигурация Spring-приложения (/resources/spring-context.xml):  
 

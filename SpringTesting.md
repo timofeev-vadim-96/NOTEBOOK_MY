@@ -8,16 +8,16 @@ Spring TestContext Framework - основная фича Spring Testing
 
 `@SpringBootTest` - для загрузки контекста приложения. Начинает работу с поиска класса с аннотацией @SpringBootApplication 
 `@MockBean` - мок-версия бина на базе контекста
-`@WebMvcTest` - для тестирования конкретных частей приложения (веб-часть - api/контроллеры)  
-`@DataJpaTest` - для тестирования jpa dao-слоя. Замокает все бины, помеченные @Repository???
+`@WebMvcTest` - для тестирования контроллеров (веб-часть - api/контроллеры)  
+`@DataJpaTest` - для тестирования jpa dao-слоя. Поднимет также все @Repository и EntityManager  
 `@JdbcTest` - для тестирования кастомных dao с JdbcTemplate  
   * также выполнит schema.sql и data.sql
-  * по умолчанию в начале КАЖДОГО теста создаст транзакцию, и откатит ее в конце теста. Чтобы отключить: @Transational(propagation = Propagation.NOT_SUPPERTED/NEVER) - над классом, или @Commit - над методом, где нужно сохранить изменения в БД
+  * по умолчанию в начале КАЖДОГО теста создаст транзакцию, и откатит ее в конце теста. Чтобы отключить: @Transational(propagation = Propagation.NOT_SUPPORTED/NEVER) - над классом, или @Commit - над методом, где нужно сохранить изменения в БД
   * нужен @ExtendWith(SpringExtension.class), если старые версии Spring
   * репозитории в контекст не поднимуются, нужно добавить через `@Import`
 `@TestConfiguration` - для определения ДОПОЛНИТЕЛЬНЫХ бинов для теста, поверх бинов в основном приложении или их ПОДМЕНЫ
   * для ПОДМЕНЫ добавить: @TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true"), либо прописать тоже самое в application.yml  
-`@AutoConfigureTestDatabase`(replace = AutoConfigureTestDatabase.Replace.NONE) - отключить замену Postgres на H2 в тестах!
+`@AutoConfigureTestDatabase`(replace = AutoConfigureTestDatabase.Replace.NONE) - отключить замену Postgres на H2 в тестах! (если в конфиге postgre)
 
 
 Можно еще:  
@@ -225,7 +225,58 @@ public class WebSecurityTestConfig {
 
 `@DataJpaTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины @Reposiroty
 
-`@WebMvcTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины @Controller
+`@WebMvcTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины 
+Пример тестов:
+```java
+@WebMvcTest(PersonController.class)
+class PersonControllerTest {
+
+    public static final String ERROR_STRING = "Таких тут нет!";
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper mapper;
+
+    //...
+
+    @Test
+    void shouldReturnCorrectPersonByNameInRequest() throws Exception {
+        Person person = new Person(1, "Person1");
+        given(repository.findByName(person.getName())).willReturn(List.of(person));
+        PersonDto expectedResult = PersonDto.toDto(person);
+
+        mvc.perform(get("/persons").param("name", person.getName()))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(expectedResult)));
+    }
+```
+
+Еще один примет тестирования классических контроллеров @Controller с @WebMvcTest
+```java
+    @Test
+    void createCommentInvalid() throws Exception {
+        long bookId = 1L;
+        BookDto book = new BookDto(bookId, "Book Title", new AuthorDto(), List.of(new GenreDto(1L, "Genre")));
+        List<CommentDto> comments = List.of(new CommentDto(1L, "Comment 1", book));
+
+        Mockito.when(bookService.findById(bookId)).thenReturn(book);
+        Mockito.when(commentService.findAllByBookId(bookId)).thenReturn(comments);
+
+        mvc.perform(MockMvcRequestBuilders.post("/{bookId}", bookId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("text", "") // Invalid input for 'text' field
+                        .param("bookId", String.valueOf(bookId)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("book"))
+                .andExpect(model().attributeExists("book"))
+                .andExpect(model().attributeExists("comments"))
+                .andExpect(model().attributeExists("genres"));
+    }
+```
+
+@Controller
   * добавить необходимые бины: @ContextConfiguration(classes = {SomeTestConfiguration.class})
   * @Autowired MockMvc MockMvc - прям поле, чтобы не поднимать Tomcat
   * чтобы замокать сервисы контроллеров - можно поставить @MockBean(class...) - на каждый сервис прямо над тестовым классом (не поле)
@@ -265,4 +316,32 @@ public class MinioTestConfig {
 @Commit
 //или
 @Rollback(value = false)
+```
+
+Для тестирования JPA:  `TestEntityManager` - работает только в рамках @Transactional (по умолчанию есть) 
+```java
+@Autowired
+private TestEntityManager em;
+```
+
+Пример теста с `TestEntityManager`:  
+```java
+@DisplayName("Репозиторий на основе Jpa для работы со студентами ")
+@DataJpaTest
+@Import(OtusStudentRepositoryJpaImpl.class)
+class OtusStudentRepositoryJpaImplTest {
+private static final long FIRST_STUDENT_ID = 1L;
+@Autowired
+private OtusStudentRepositoryJpaImpl repositoryJpa;
+@Autowired
+private TestEntityManager em;
+@DisplayName(" должен загружать информацию о нужном студенте по его id")
+@Test
+void shouldFindExpectedStudentById() {
+val optionalActualStudent = repositoryJpa.findById(FIRST_STUDENT_ID);
+val expectedStudent = em.find(OtusStudent.class, FIRST_STUDENT_ID);
+assertThat(optionalActualStudent).isPresent().get()
+.isEqualToComparingFieldByField(expectedStudent);
+}
+}
 ```

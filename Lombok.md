@@ -25,6 +25,7 @@ log.info("Входящий запрос: {}", uri);
 * @Getter //добавляет геттеры для всех параметров класса
 * @Setter //добавляет сеттеры для всех параметров класса
 * @EqualsAndHashCode //добавляет реализации методов equals и hashCode
+  * @EqualsAndHashCode(of = {"id", "title"})
 * @ToString //добавляет реализацию метода toString
 * @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true) //делает все поля private и final
 

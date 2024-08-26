@@ -225,7 +225,7 @@ List<Entity> findByNameNative(@Param("columnName") String columnName);
 //достаем студента
         Student firstStudent = service.findAll(Student.class).stream().findFirst().get();
 		//достаем его зависимости
-        Hibernate.initialize(firstStudent);
+        Hibernate.initialize(firstStudent); - инициализировать прокси в норм объект
 		//конвертим список зависимостей с объектами в список с названиями
         List<String> courses = firstStudent.getCourses().stream().map(Course::getTitle).toList();
         System.out.println(courses);
@@ -243,7 +243,7 @@ List<Entity> findByNameNative(@Param("columnName") String columnName);
 Демонстрация `@Ingeritance(strategy = IngeritanceType.JOINED)` - все сущности хранятся в разных таблицах, ссылаясь на записи в таблицах верхних типов  
 ![](images/hibernate_inheritance.png)
 
-`EntityManager` - отвечает за всю работу с сущностями в рамках Session. В Spring внедряется с помощью @PersistenceContext над полем менеджера  
+`EntityManager` - отвечает за всю работу с сущностями в рамках Session. В Spring внедряется с помощью `@PersistenceContext` над полем менеджера  
 **Методы EntityManager-а**:  
 * find – поиск и загрузка объекта по его id. Объект сразу получается в
 состоянии persistent
@@ -258,6 +258,45 @@ insert. Бросает PersistentObjectException если задан id
 * createQuery – создание объекта запроса
 * getEntityGraph – получение, ранее определенного графа объектов
 
+```java
+//именно так инжектить. Со своим конструктором, а не ломбоковским. Хз почему не работает с ним
+    @PersistenceContext //для его загрузки. Без него работать не должно
+    private final EntityManager em;
+
+    public JdbcGenreRepository(EntityManager em) {
+        this.em = em;
+    }
+```
+
+`EntityGraph` (перебивает LAZY) - позволяет указать какие поля сущности загружать в Persistance Context с ней в одном запросе. Обычно задается с помощью аннотации `@NamedEntityGraph` над сущностью
+  * может быть применен к объекту Query с помощью метода setHint ????
+
+`@NamedEntityGraph` для подрузки LAZY сущностей вместе с основной
+```java
+@NamedEntityGraph(name = "avatars-entity-graph", attributeNodes = {@NamedAttributeNode("avatar")}) //здесь имя поля
+public class Clazz {
+	//...
+	private Avatar avatar;
+}
+
+//DAO пример подругузки с помощью EntityGraph
+@Override
+public List<OtusStudent> findAll() {
+EntityGraph<?> entityGraph = em.getEntityGraph("avatars-entity-graph");
+TypedQuery<OtusStudent> query = em.createQuery("select s from OtusStudent s",
+OtusStudent.class);
+query.setHint("jakarta.persistence.fetchgraph", entityGraph); //подсовываем подруженную сущность
+return query.getResultList();
+}
+```
+
+Для использования вместо "jakarta.persistence.fetchgraph" `FETCH.getKey()`
+```java
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH;
+```
+
+## JPQL
+
 `JPQL` - язык запросов спецификации JPA. Суть языка в том, что запросы производятся к java-сущностям и ее полям. 
 
 Пример `JPQL-запросов`:  
@@ -271,9 +310,101 @@ select count(e) from Employee e
 ---------------------------------------------------------------------------------
 select max(e.salary) from Employee e
 select avg(e.salary) from Employee e
+---
 select e
 from Employee e join
 e.projects p1 join
 e.projects p2
 where p1.name = :p1 and p2.name = :p2
+--с подзапросом
+select e
+from Employee e
+where e.firstName = any (select e2.firstName from Employee e2 where e2.id <> e.id)
+--IN
+select e
+from Employee e
+where e.firstName in :names
+---
+select e
+from Employee e
+where e.firstName in (select e2.firstName
+from Employee e2
+where e2.lastName = :lastName and e2.id <> :id
+---
+select e
+from Employee e
+where e.firstName in (:name1, :name2)
+---
+select new r.o.e.j.d.CitySalary(e.address.city, avg(e.salary))
+from Employee e
+group by e.address.city
+order by avg(e.salary)
+)
+```
+
+Классы для JPQL-запросов: `TypedQuery<T>` и `Query`
+
+`JPQL поиск по имени (список)`:  
+```java
+@Override
+public List<OtusStudent> findByName(String name) {
+TypedQuery<OtusStudent> query = em.createQuery(
+"select s " +
+"from OtusStudent s " +
+"where s.name = :name",
+OtusStudent.class);
+query.setParameter("name", name);
+return query.getResultList();
+}
+```
+
+`JPQL обновление`
+```java
+@Override
+public void updateNameById(long id, String name) {
+Query query = em.createQuery("update OtusStudent s " +
+"set s.name = :name " +
+"where s.id = :id");
+query.setParameter("name", name);
+query.setParameter("id", id);
+query.executeUpdate();
+}
+```
+
+`JPQL удаление`
+```java
+@Override
+public void deleteById(long id) {
+Query query = em.createQuery("delete from OtusStudent s where s.id = :id");
+query.setParameter("id", id);
+query.executeUpdate();
+}
+```
+
+
+
+`JOIN FETCH` (аналог графа) - позволяет загружать дочерние сущности в одном запросе с родительской. Это часть JPQL-запроса  
+**Пример:**  
+```sql
+select distinct s from OtusStudent s join fetch s.emails
+```
+
+`@Fetch` - указывает фреймворку, что нужно отдельно подгрузить список дочерних сущностей
+```java
+@Fetch(FetchMode.SELECT)
+//использовать, когда в запросе есть такое: join fetch ...коллекция
+"select b from Book b left join fetch b.genres"
+```
+  * вешается над полем родительской сущности
+
+---
+
+`Дотянуть Lazy-сущности`. Идея - в одной транзакции получить нужные сущности и конвертировать в Dto, где Lazy-поля понадобятся и дотянутся в рамках транзакции
+```java
+@Transactional(readOnly = true)
+@Override
+public List<OtusStudentDto> findAll() {
+List<OtusStudent> students = studentRepository.findAll();
+return students.stream.map(studentConverter::toDto).toList();
+}
 ```

@@ -48,7 +48,14 @@ Spring базируется не нескольких принципах. Клю
   * если спринг находит несколько подходящих бинов -> UnsatisfiedDependencyException
   * используется на полях - внедрит даже в приватное, даже без сеттера или конструктора (с помощью Reflection API)  
 
-@GetMapping("/some-url", produces = MediaType.TEXT_PLAIN_VALUE, consumes = ...) //помечаются методы, которые будут вызываться при вызове определенной URL, **produces** - тип данных, которые возвращает, **consumes** - тип принимаемых данных
+> при работе с контроллерами отключай транзакционность
+
+```yml
+  jpa:
+    open-in-view: false
+```
+
+`@GetMapping`("/some-url", produces = MediaType.TEXT_PLAIN_VALUE, consumes = ..., params = "name") //помечаются методы, которые будут вызываться при вызове определенной URL, **produces** - тип данных, которые возвращает, **consumes** - тип принимаемых данных, **params** - указывать, если метод принимает @RequestParam, чтобы отличать два эндпоинта с одинаковым путем, но разными входными параметрами
 
 p.s.
 Spring берет все наши классы как бы из контейнера. 
@@ -191,7 +198,19 @@ public class SpringConfig {
 через единственный запрос/ответ, так и через
 потоковые вызовы.
 
-`REST` - это архитектурный стиль, используемый для обмена данными в вебе. (пример: **JSON**)
+## REST
+
+`REST` - это архитектурный стиль, используемый для обмена данными в вебе в формате клиент-сервер. (пример: **JSON**)  
+`Требования`  
+  * общение в формате запрос-ответ
+  * на сервер отсутствует состояние клиента (сервер не знает, что на данный момент видит пользователь)   
+  Пример: корзина с покупками должна быть на фронтенде вплоть до формирования заказа
+  * юзаем кэширование
+  * простой интерфейс API (ресуры идентифицируются по URL как ресурс/папка) 
+    * person/12/order/12 - однозначно идентифицируют пользователя и его заказ
+  * клиент не должен знать общается ли он с сервером, или с промежуточным звеном (балансер, сервер авторизации)
+
+---
 
 `Методы HTTP-запросов:`
 * Get - для запроса данных с сервера. Тело запроса пустое. Но некоторые **параметры** поиска могут передаваться в самом URL после знака "?" в формате ключ=значение, такие параметры разделяются амперсантом И "&"  
@@ -308,6 +327,8 @@ ResponseEntity.status(HttpStatus.CREATED).body(issue);
 ResponseEntity<Void>
 ```
 
+`@RequestMapping`("/api", params = "name") - указывать params, если метод принимает @RequestParam, чтобы отличать два эндпоинта с одинаковым путем, но разными входными параметрами
+
 Аннотация `@RequestMapping`("/api") - все URL-запросы должны иметь в теле "/api/"
   * Устаревший вариант > 5 лет - @RequestMapping(value = "/new", method = RequestMethod.GET) //после точки - вид запроса
 
@@ -317,7 +338,10 @@ ResponseEntity<Void>
 **Возвращаем ответ**  
 Чтобы вернуть ответ из обработчика, мы просто возвращаем объект, который должен быть включен в тело
 ответа. Spring автоматически преобразует его в нужный формат (обычно JSON). Чтобы контролировать
-другие аспекты ответа, такие как HTTP-статус, мы можем использовать класс `ResponseEntity`.
+другие аспекты ответа, такие как HTTP-статус, мы можем использовать класс `ResponseEntity`. В него можно засунуть:  
+* HTTP status code
+* Response Body
+* Header-ы
 ![](images/spring_rest_response.png)
 
 `@PathVariable`("id") - получение переменной из запроса "items/{id}", когда такая переменная обязательна  
@@ -331,11 +355,14 @@ ResponseEntity<Void>
 @RequestParam(required = false)
 ```
 
+`@RequestParam`(value = "amount") long id. Если используем примитив, то параметр обязательный, если Обертку, то может быть null.
+
 **Обработка исключений в Spring**  
 В Spring мы можем использовать
 аннотацию `@ExceptionHandler` для определения методов, которые будут обрабатывать определенные
 исключения.
 ![метод для обработки исключений](images/spring_exception_handler.png)  
+  * можно и не внедрять исключение в метод в качестве параметра 
 
 Также, можно определить целый `класс для перехвата всех исключений` и реализовать в нем методы их обработки  
 Такие классы помечаются с помощью `@ControllerAdvice`  
@@ -344,7 +371,9 @@ ResponseEntity<Void>
 **Обработка JSON в Spring**  
 Большинство RESTful API используют JSON для обмена данными. Spring автоматически преобразует объекты в JSON и наоборот. Все, что нам нужно сделать, это использовать аннотацию `@RequestBody` для принятия JSON
 в качестве входных данных и возвращать объекты из наших обработчиков.
-![прием json объектов в запросе](images/spring_request_body_json.png)  
+![прием json объектов в запросе](images/spring_request_body_json.png) 
+
+`@RequestHeader` - для получения значение конкретного заголовка в запросе
 
 **Составление HTTP-запросов, включая POST**  
 Для этого используется программа HTTPie - аналог Postman    
@@ -505,7 +534,7 @@ CMD ["java", "-jar", "my-app-1.0.0.jar"]
 
 Особенный компонент: `DispatcherServlet`
 
-`DispatcherServlet` - и его работа — это как раз и есть определение, что нужно пользователю. Когда диспетчер понимает, что нужно пользователю, он ищет нужную страницу среди всех контроллеров приложения (сервлетов).  
+`DispatcherServlet` - распределитель HTTP-запросов по сервлетам (обработчикам). Все запросы сначала приходят в него — это как раз и есть определение, что нужно пользователю. Когда диспетчер понимает, что нужно пользователю, он ищет нужную страницу среди всех контроллеров приложения (сервлетов).  
 
 **DispatcherServlet:**  
 * является входной точкой приложения
@@ -694,6 +723,11 @@ Integer maxAllowedBooks = environment.getProperty("${application.issue.max-allow
 `Spring Data JPA` – это модуль, который предоставляет 
 поддержку для работы с SQL базами данных через JPA.
 
+JPA использует `JPQL` в методах:  
+`Словарь JPQL`:  
+![](images/jpql_dictionary_1.png)  
+![](images/jpql_dictionary_2.png)
+
 `Spring Data MongoDB` позволяет нам работать
 с документами MongoDB, как если бы это были
 обычные Java объекты.
@@ -705,9 +739,12 @@ Integer maxAllowedBooks = environment.getProperty("${application.issue.max-allow
 Репозитории в `Spring Data` – это как магазины
 данных для ваших Java объектов.
 
+`Интерфейс Repository` - для использования своих кастомных методов и только
+
 `Создать CRUD-репозиторий Spring Data`:  
 ![репозиторий в Spring Data](images/spring_data_repository.png)  
-У него есть findAll, который возвращает **Iterable**, а не коллекцию
+У него есть findAll, который возвращает **Iterable**, а не коллекцию. Этого недостатка нет у JpaRepo...  
+
 Чтобы `преобразовать Iterable в List`:  
 ```java
 Iterable<User> iterable = dao.findAll();
@@ -726,10 +763,78 @@ public interface UserRepository extends CrudRepository<User, Long>{
 }
 ```  
 
+Дотянуть зависимые сущности в модели с JpaRepository:  
+```java
+public interface PersonRepository extends JpaRepository<Person, Long> {
+    @EntityGraph(attributePath = "email") //больше нигде не надо указывать. email - имя поля в Person
+    List<Person> findAll();
+}
+```
+
+`@NamedEntityGraph`  - установить граф для внутренней сущности
+```java
+@NamedEntityGraph(
+        name = "author-entity-graph",
+        attributeNodes = {@NamedAttributeNode("author")})
+public class Book {}
+```
+
+`Запрос с графом`  
+```java
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH;
+//используется в setHint
+
+    @Override
+    public Optional<Book> findById(long id) {
+        String sqlForBook = "select b from Book b left join fetch b.genres where b.id = :id";
+        EntityGraph<?> entityGraph = em.getEntityGraph("author-entity-graph");
+        TypedQuery<Book> query = em.createQuery(sqlForBook, Book.class);
+        query.setParameter("id", id);
+        query.setHint(FETCH.getKey(), entityGraph);
+
+        return query.getResultList().isEmpty() ? Optional.empty() : Optional.of(query.getResultList().get(0));
+    }
+```
+
 `Создание метода с сложным запросом`  
+
+`@Query` - для модификации запроса JpaRepository. 
 
 С помощью `@Query`  
 ![query запрос в Spring Data](images/spring_data_query_repo.png)
+
+Если запрос модифицирует БД, то сверху еще `@Modifying` - без него при попытке модификации выбросит ислючение InvalidDataAccessApiUsageException  + @Transactional (без него тоже исключение)
+```java
+@Modifying
+@Transactional
+@Query("update Acctount a set a.name = :name where a.id = :id")
+void updateNameById(@Param("name") String name, @Param("id") long id);
+//или
+@Modifying
+@Transactional
+@Query("update Acctount a set a.name = ?2 where a.id = ?1")
+void updateNameById(long id, String name);
+```
+
+Добавить свою реализацию методов к JpaRepository:  (ничего не понятно)
+```java
+//неследуемся от JPA и своего интерфейса
+public interface AcctountRepository extends JpaRepository<Account, Long> {}
+
+//свой интерфейс
+public interface AcountRepositoryCustom {
+    public void customMethod();
+}
+
+//Название важно!
+public class AccountRepositoryImpl implements AcountRepositoryCustom {
+    //инжектим наш JpaRepo..
+    private AccountRepository accountRepository;
+
+    public void customMethod() {}
+
+}
+```
 
 `Магия JPA-репозитория` базируется на названии метода, в соответствии с [документацией](https://docs.spring.io/spring-data/jpa/reference/repositories/query-keywords-reference.html)   
 
@@ -740,6 +845,7 @@ public interface UserRepository extends CrudRepository<User, Long>{
 
 Пример `конфига Spring Data с помощью application.yml`  
 ![конфиг спринг дата через yml](images/spring_data_application_yaml_config.png)
+  + spring.jpa.generate-ddl: false - также отключает генерацию таблиц крч
 
 ● **spring.datasource**: Здесь мы указываем параметры подключения к базе данных,
 такие как URL, имя пользователя и пароль.  
@@ -1074,3 +1180,31 @@ public class CustomCondition extends AllNestedConditions {
 * автоматически выполняет файлы schema.sql, data.sql
 
 `@SuppressWarnings`({"SpellCheckingInspection", "unused"}) - для подавления `Предупреждений`  
+
+`WebApplicationContext` – это интерфейс и имеет
+несколько реализаций:
+○ XmlWebApplicationContext – XML-based
+○ AnnotationConfigWebApplicationContext –
+Java-based
+○ GroovyWebApplicationContext – Groovy-based
+○ XmlPortletApplicationContext –XML-based для
+portlet-ов
+○ И т.д.
+
+`MediaType` типы  
+* `MediaType.APPLICATION_JSON`: Используется для обмена данными в формате JSON. Это стандартный тип для REST API, так как он обеспечивает структурированный и легкий для обработки формат. 
+* `MediaType.APPLICATION_XML`: Используется для обмена данными в формате XML. Он был популярен раньше, но сейчас JSON предпочтительнее в большинстве случаев.
+* `MediaType.TEXT_PLAIN`: Используется для обмена текстовыми данными, например, в файлах с простым текстом. 
+* `MediaType.TEXT_HTML`: Используется для обмена HTML-контентом. 
+* `MediaType.APPLICATION_OCTET_STREAM`: Используется для передачи произвольных двоичных данных, таких как файлы изображений, архивы и т.д.
+
+Типы изображений:
+
+* `MediaType.IMAGE_JPEG`: Используется для передачи изображений в формате JPEG. 
+* `MediaType.IMAGE_PNG`: Используется для передачи изображений в формате PNG. 
+* `MediaType.IMAGE_GIF`: Используется для передачи изображений в формате GIF.
+
+Другие типы:
+
+* `MediaType.APPLICATION_PDF`: Используется для передачи файлов PDF. 
+* `MediaType.APPLICATION_ZIP`: Используется для передачи ZIP-архивов.

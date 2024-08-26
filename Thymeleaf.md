@@ -4,6 +4,8 @@
 
 ## Thymeleaf - шаблонизатор представлений
 
+[туториал (habr)](https://habr.com/ru/articles/350862/)
+
 `Шаблонизатор` - художник веб-страниц. Это инструмент, который помогает нам создавать веб-страницы более эффективно. Он позволяет нам разделить структуру страницы (HTML) и данные, которые мы хотим отобразить на этой странице.  
 
 **Представления** шаблонизатора должны располагаться в директории:  
@@ -12,7 +14,51 @@ src/main/resources/templates
 **Статичные страницы**, такие как index.html (первая страница сайта) и таблицы стилей CSS, должны располагаться в директории:  
 src/main/resources/static
 
-Шаблонизатор `Thymeleaf`  
+`Зависимость`
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+
+`Синтаксис`  
+![](images/thymeleaf_syntaxis.png)
+
+`Синтаксис №2`
+![](images/thymeleaf_syntaxis2.png)  
+  * так задастся @RequestParam в виде ?id=1
+
+`Синтаксис №3`  
+```
+● <a th:href="@{/account(id=${id})}"> – такая
+конструкция позволяет подставлять query/request
+параметры  
+● <a th:href="@{/account/__${author.id}__}"> – а такая в подставлять параметры путь (path)
+● error.html – сделать это шаблон достаточно, чтобы обработать ошибки
+```
+
+`Синтаксис №4`
+![](images/thymeleaf_syntaxis4.png) 
+
+`Синтаксис №5`
+![](images/thymeleaf_syntaxis5.png) 
+
+`Синтаксис №6`  
+● @beanName – Spring-бин с именем "beanName"  
+● #locale – текущая локаль  
+● #ctx – текущий контекст  
+● Конкатенация, арифметические и условные
+операции.  
+
+`Синтаксис №7` Локализация
+![](images/thymeleaf_syntaxis7.png) 
+
+`Синтаксис №8` Локализация с параметрами
+![](images/thymeleaf_syntaxis8.png) 
+
+`Синтаксис №9` Локализация с параметрами
+![](images/thymeleaf_syntaxis9.png) 
 
 **Thymeleaf в цикле:**
 ```xml
@@ -65,6 +111,15 @@ src/main/resources/static
 </head>
 ```
 
+`Пример Post-ручки`
+```java
+    @PostMapping("/edit")
+    public String editBook(BookViewDto book) {
+        bookService.update(book.getId(), book.getTitle(), book.getAuthorId(), book.getGenres());
+        return "redirect:/book"; //редирект на страницу со списком книг
+    }
+```
+
 Пример "ручки" при работе с **отображениями с помощью Thymeleaf**:  
 ```java
     @GetMapping
@@ -75,3 +130,8 @@ src/main/resources/static
 ```
 Model model - ровно тоже самое, что HashMap. В модель внедрятся те значения, которые следует передать в представление
 .addAttrubete - добавляем ключ, значение  
+
+`span`
+```xml
+<span th:text="hello, ${name}">Hello, Username</span> - вместо дефолтного текста отобразится сгенерированный, если в переменной name что-то есть
+```

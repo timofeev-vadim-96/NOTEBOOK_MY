@@ -1253,6 +1253,13 @@ return String.format("id: %d, sl: %s, fn: %n, ln: %l" id, salary, firstName, las
 public int hashCode() {  
         return id;  
     }  
+Если нужно `включить не только целочисленные поля`:  
+```java
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title);
+    }
+```
 
 * **Переопределить equals:**  //переопределять для того, чтобы при вызове .equals объекты сравнивались по тем критерями, по которым надо нам... Имени, возрасту и т.д.  p.s. В базовом случае сравниваются ссылки на объекты. А так как при создании объекта мы пишем NEW - то ссылки будут всегда разные и объекты, соответственно, уникальными  
 public boolean equals(Object obj) {  
@@ -2576,6 +2583,12 @@ Optional<BookEntity> book
 book.map(ResponseEntity::ok).orElseGet(()->ResponseEntity.notFound().build())
 ```
 
+`Список в мапу/лист в мапу`  
+```java
+Map<Long, Genre> genresMap = genres.stream()
+        .collect(Collectors
+                .toMap(Genre::getId, Function.identity()));
+```
 
 
 

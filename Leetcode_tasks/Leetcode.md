@@ -5,7 +5,7 @@
 ### Leetcode
 
 Задачи:  
-
+[1. Two Sum](\TwoSum.java)  
 [2. Add Two Numbers (Middle)](ListNodeTwoNumbers.java)  
 [3. Longest Substring Without Repeating Characters](LongestSubstring.java)  (Medium)  
 [5. Longest Palindromic Substring](\LongestPalindromicSubstring.java) (Medium)  
@@ -19,10 +19,19 @@
 [34. Find First and Last Position of Element in Sorted Array](\FindFirstAndLastPositionOfElementInSortedArray.java) (Medium)    
 [35. Search Insert Position](\SearchInsertPosition.java)    
 [58. Length of Last Word](\LengthOfLastWord.java)  
+[66. Plus One](\PlusOne.java)  
+[82. RemoveDuplicatesFromSortedLinkedList2](\RemoveDuplicatesFromSortedLinkedList2.java) (Medium)  
+[83. RemoveDuplicatesFromSortedLinkedList](\RemoveDuplicatesFromSortedLinkedList.java)  
 [88. Merge Sorted Array](\MergeTwoSortedArrays.java)  
+[100. SameTree](\SameTree.java)  
 [101. Symmetric Tree](\SymmetricTree.java)  
+[104. MaxDepthOfBinaryTree](\MaxDepthOfBinaryTree.java)  
+[111. MinDepthOfBinaryTree](\MinDepthOfBinaryTree.java)  
+[112. PathSum](\PathSum.java)  
 [121. Best Time to Buy and Sell Stock](\MaxProfit.java)  
 [125. Valid Palindrome](\ValidPalindromeWord.java)  
+[136. Single Number](\SingleNumber.java)  
+[141. LinkedListCycle](\LinkedListCycle.java)  
 [206. Reverse Linked List](\ReverseLinkedList.java)  
 [217. Contains Duplicate](ContainsDuplicateNumb.java)  
 [228. Summary Ranges](\SummaryRanges.java)  

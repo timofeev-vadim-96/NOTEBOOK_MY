@@ -693,3 +693,23 @@ public class MyTestClass
                 .withMessageContaining("400")
                 .withMessageContaining(HttpStatus.BAD_REQUEST.name());
 ```
+
+Протестировать `количество SQL-запросов`:  
+```java
+    void shouldReturnCorrectStudentsListWithAllInfo() {
+      //em - is EntityManager
+        SessionFactory sessionFactory = em.getEntityManager().getEntityManagerFactory()
+                .unwrap(SessionFactory.class);
+        sessionFactory.getStatistics().setStatisticsEnabled(true);
+
+        //some code with sql-queries
+        
+        val students = repositoryJpa.findAll();
+        assertThat(sessionFactory.getStatistics().getPrepareStatementCount()).isEqualTo(EXPECTED_QUERIES_COUNT);
+    }
+```
+
+`assertThrows`() - проверка выбрасывания исключения из JUnit5
+```java
+assertThrows(IllegalArgumentException.class, ()-> bookService.insert("someTitle", 1L, Set.of()));
+```
