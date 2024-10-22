@@ -210,6 +210,29 @@ public class SpringConfig {
     * person/12/order/12 - однозначно идентифицируют пользователя и его заказ
   * клиент не должен знать общается ли он с сервером, или с промежуточным звеном (балансер, сервер авторизации)
 
+Высший пилотаж для REST - `HATEOAS` - когда вместе с сущностью отдаются еще и links (ссылки) на все возможные действия с ней:  
+![hateoas](images/rest_hateoas.png)
+
+HATEAOS - только подход. Реализация в java - `HAL`
+
+`Зависимость HAL (HATEAOS)`
+```xml
+<dependency>
+ <groupId>org.springframework.data</groupId>
+ <artifactId>spring-data-rest-hal-explorer</artifactId>
+</dependency>
+```
+Данные в HATEOAS – набор ресурсов по URL в
+определённом контексте. Не надо запоминать
+форматы URL, не требуется версионность
+* Клиент не зависит от представления ресурсов (на
+сервере, к примеру, можно без последствий
+заменить ID на UUID)
+* **ID не возвращается** (если хочется, значит, что-то
+сделано неверно)
+* HATEOAS даёт возможность ходить по ссылкам
+связанных сущностей
+
 ---
 
 `Методы HTTP-запросов:`
@@ -236,6 +259,22 @@ public class SpringConfig {
 * protocol version - версия протокола
 * header - заголовки (информация о клиенте)
 * body (не обязательно) - тело запроса
+
+Клиенты для осуществления `Rest-запросов по HTTP`:  
+1. HttpClient, URL - Java-based история
+2. RestTemplate от Spring Web
+3. WebClient - от Spring WebFlux
+  * RestClient - для синхронных запросов
+4. FeignClient
+
+`RestTemplate`
+1. Упрощает реализацию клиента
+2. Поддержка Jackson, GSON
+3. Под капотом использует заданную
+реализацию
+4. По умолчанию на базе JDK
+(HttpURLConnection) - достается из URL-клиента. Не поддерживает иные запросы, кроме GET/POST
+5. Рекомендуется подключить Apache HttpClient
 
 CRUD-APP стандарт адресов (из стандарта REST):  
 
@@ -580,6 +619,28 @@ public class MyFilter implements Filter {
 }
 ```  
 
+Filter (Фильтр), где кладем новый параметр в Http-запрос:
+```java
+public class MyOwnFilter extends GenericFilterBean {
+    @Override
+    public void doFilter(ServletRequest servletRequest,
+                         ServletResponse servletResponse,
+                         FilterChain filterChain) throws IOException, ServletException {
+        var requestWrapper = new HttpServletRequestWrapper((HttpServletRequest) servletRequest) {
+            @Override
+            public String[] getParameterValues(String name) {
+                if ("SpecialValue".equals(name)) {
+                    return new String[]{"My dirty secret"};
+                }
+                return super.getParameterValues(name);
+            }
+        };
+
+        filterChain.doFilter(requestWrapper, servletResponse);
+    }
+}
+```
+
 `Жизненный цикл бина:`
 1. Создание BeanDefinition
 2. Возможность создать свои BeanDefinition(через ImportBeanDefinitionRegistrar)
@@ -846,16 +907,16 @@ public class AccountRepositoryImpl implements AcountRepositoryCustom {
 Пример `конфига Spring Data с помощью application.yml`  
 ![конфиг спринг дата через yml](images/spring_data_application_yaml_config.png)
   + spring.jpa.generate-ddl: false - также отключает генерацию таблиц крч
-
-● **spring.datasource**: Здесь мы указываем параметры подключения к базе данных,
+  + jpa.open-in-view: false - чтобы на заворачивать каждый метод КОНТРОЛЛЕРОВ в транзакцию
+  + **spring.datasource**: Здесь мы указываем параметры подключения к базе данных,
 такие как URL, имя пользователя и пароль.  
-● **spring.jpa.hibernate.ddl-auto**: Этот параметр определяет, как Hibernate должен управлять схемой базы данных. (**update** - если таблицы не соответствуют - будут подогнаны под сущности в коде, **create** - создаст, если еще не создано)  
+  + **spring.jpa.hibernate.ddl-auto**: Этот параметр определяет, как Hibernate должен управлять схемой базы данных. (**update** - если таблицы не соответствуют - будут подогнаны под сущности в коде, **create** - создаст, если еще не создано)  
   * может быть еще **validate** (очень часто) - проверка соответствия сущностей структуре таблиц в БД  - приложение не запустится, если не соответствует
-  * **create** - при запуске создат таблицы
-  * **create-drop** (редко) - при запуске создат, при остановке - уничтожит таблицы
-● **spring.jpa.show-sql**: Если этот параметр установлен в true, Hibernate будет
+    * **create** - при запуске создат таблицы
+    * **create-drop** (редко) - при запуске создат, при остановке - уничтожит таблицы
+  + **spring.jpa.show-sql**: Если этот параметр установлен в true, Hibernate будет
 показывать SQL запросы, которые он выполняет.  
-Может еще понадобится **driver-class-name**:  
+Может еще понадобится **spring.datawource.driver-class-name**:  
 ```java
 driver-class-name: com.mysql.jdbc.Driver
 ```
@@ -1208,3 +1269,63 @@ portlet-ов
 
 * `MediaType.APPLICATION_PDF`: Используется для передачи файлов PDF. 
 * `MediaType.APPLICATION_ZIP`: Используется для передачи ZIP-архивов.
+
+
+## Spring Data Rest
+
+`Spring-Data-REST` - это самый простой способ сделать CRUD-приложение
+
+* Основан на HATEOAS-принципах
+* реализуется через дополнительные аннотации к REST-репозиторию
+
+`Зависимость`  
+```xml
+<dependency>
+ <groupId>org.springframework.boot</groupId>
+ <artifactId>spring-boot-starter-data-rest</artifactId>
+</dependency>
+```
+
+Аннотации Spring-Data-REST:  
+```java
+@RepositoryRestResource(path - "person")
+public interface PersonRepository extends //... {
+    ListL<Person> findAll();
+
+    @RestResource(path = "names", rel = "names") //rel - заменит имя метода в UI где Relation
+    List<Person> findByName(String name);
+}
+```
+
+конфиг yml для подключения Spring-Data-REST:
+```yml
+spring:
+    data:
+        rest:
+            basePath: /datarest
+```
+
+---
+
+
+`EntityManager`. При использовании Hibernate (по дефолту) - под капотом класс Session  
+  * работает с сущностями в рамках сессий (persistence контекст)
+
+`EntityManagerFactory`. При использовании Hibernate (по дефолту) - под капотом SessionFactory. 
+  * в нужный момент создает EntityManager
+
+## Работа с двумя и более БД
+
+Если реляционная + монга, то все норм. Если редис + монго, то все норм. ПОТОМУ ЧТО АВТОКОНФИГУРАЦИИ РАЗНЫЕ
+
+> [OTUS](https://vk.com/video/playlist/-145052891_91?to=L3ZpZGVvL3BsYXlsaXN0Ly0xNDUwNTI4OTFfOTE%2Fej12aWRlby0xNDUwNTI4OTFfNDU2MjQyMjE1JTJGY2x1YjE0NTA1Mjg5MSUyRnBsXy0xNDUwNTI4OTFfOTE-&z=video-145052891_456242215%2Fclub145052891%2Fpl_-145052891_91)
+
+Придется `переопределить все бины` уже для двух БД, которые создавались бы в автоконфигурации. 1:18:00 в видео OTUS
+
+`Конфиг` для работы с двумя БД:  
+![](images/two_databases_yml.png)  
+
+модели:  
+* если есть Заметки, в которых есть User, то все поля юзера кроме id будут @Transient
+* User в Заметках будет помечен @Embeded
+* над самим классом User будет @Embeddable

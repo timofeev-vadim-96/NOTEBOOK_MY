@@ -8,6 +8,8 @@
 
 > [Работающий конфиг JWT-аутентификации в+ Spring Security](https://github.com/timofeev-vadim-96/jwt-auth.git)
 
+[Пример от OTUS](https://github.com/OtusTeam/Spring/blob/master/2024-05/spring-25-SS-auth/jwt/src/main/java/ru/otus/security/jwt/controller/TokenController.java) - для приложения, генерирующего токены самостоятельно
+
 `зависимость` - для генерации jwt-токенов  
 ```xml
 		<dependency>
@@ -47,5 +49,7 @@ JWT `состоит` из трех основных частей:
 ![](images/jwt.png)
 
 [Сайт для генерации секретных серверных ключей](https://randomkeygen.com/)
+
+[Генерация JWT Secret](https://jwtsecret.com/generate)
 
 ---

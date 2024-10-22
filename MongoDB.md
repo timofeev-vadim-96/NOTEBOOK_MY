@@ -12,6 +12,23 @@ GUI для MongoDb - MongoDb Compass. Но можно и в Idea (даже лу�
 
 default port: 27017
 
+docker-compose config:  
+```yml
+version: '3.7'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: bdung
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+```
+
 > [курсы по Mongo](https://learn.mongodb.com/catalog): basics, for java dev, aggregation, spring
 
 `Плюсы:`  

@@ -533,6 +533,13 @@ right join hd
 on hd.id_pack_animal = pa.id_pack_animal;
 ```
 
+`Пример row_number()`  
+with res as (select player_id, event_date, row_number()
+over (partition by player_id order by event_date) as rn 
+from Activity)
+select res.player_id, res.event_date as first_login from res
+where res.rn = 1;  
+
   * RANK — функция возвращает ранг каждой строки. Ранг определяется относительно значения строки по определенному столбцу. КРЧ, если, например, значения цены одинаковые - ранг будет одинаковый.  Но! с пропуском следующего значения. Это значит, что если у следующей строки значение будет отличаться, то она будет уже рангом не 1, а 3;
   * DENSE_RANK — функция возвращает ранг каждой строки. Но в отличие от функции RANK, она для одинаковых значений
   возвращает ранг, не пропуская следующий; Это значит, что у первых двух одинаковых строк будет ранг 1, а у третей 2
@@ -822,3 +829,6 @@ INSERT с возвращением сгенерированного ID:
 ```sql
 String sql = "insert into books (title, author_id) values (:title, :authorId) returning id";
 ```  
+
+КАСТАНУТЬ к дробным числам:  
+cast(rating as decimal) - rating был int

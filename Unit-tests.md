@@ -500,6 +500,47 @@ Mockito.doThrow(RuntimeException.class).when(auto).changeWheels();
 
 ### TestContainers - по сути, java-обертка над докером //на практике почти не используют, т.к. мы либо мокируем зависимости, либо поднимаем свою же БД в докере
 
+> [Пример от OTUS](https://github.com/petrelevich/otus_java_2022_06/tree/main/L09-docker)
+
+`Зависимость`
+```xml
+<dependency>
+ <groupId>org.testcontainers</groupId>
+ <artifactId>testcontainers</artifactId>
+ <version>1.11.1</version>
+ <scope>test</scope>
+</dependency>
+```
+
+Пример использования TestContainers
+```java
+public class RedisBackedCacheIntTest {
+ private RedisBackedCache underTest;
+ @Rule
+ public GenericContainer redis = new GenericContainer<>("redis:5.0.3-alpine")
+ .withExposedPorts(6379);
+ @Before
+ public void setUp() {
+ String address = redis.getContainerIpAddress();
+ Integer port = redis.getFirstMappedPort();
+ underTest = new RedisBackedCache(address, port);
+ }
+ @Test
+ public void testSimplePutAndGet() {
+ underTest.put("test", "example");
+ String retrieved = underTest.get("test");
+ assertEquals("example", retrieved);
+ }
+}
+```
+* @Rule говорит Junit уведомлять это поле о ходе
+тестов
+* TestContainer найдет и проверит что докер
+установлен
+* Скачает image если нужно
+* Поднимет контейнер
+* Удалит контейнер после окончания тестов
+
 Объекты подмены:
 * для БД - Postgres container
 * для какого-то сервиса, с которым общаемся по HTTP - MockServer/WireMock

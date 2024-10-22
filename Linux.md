@@ -1,5 +1,7 @@
 > [НАЗАД к СОДЕРЖАНИЮ](README.md)
 
+> остановить приложение, запущенное из jar: `taskkill /f /im java.exe`
+
 ---
 
 # LINUX
@@ -1286,6 +1288,9 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
   * docker ps -a - все контейнеры //столбец name генерирует имя рандомно
 ● docker images – список образов
   * docker rmi images \$(docker images -aq)
+● docker image 
+  * docker image ls - список всех образов
+  * docker image rm someImage - удалить образ с именем someImage
 ● docker search nginx – поиск образа на удаленном репозитории докера
 ● docker pull nginx – скачивание образа. Если уже был образ, но более старой версии - он обновится на latest. 
   * docker pull ubuntu - по дефолту latest
@@ -1294,6 +1299,7 @@ FLUSH PRIVILEGES; //сохранить привелегии пользовате
   * добавить --name name //именованный контейнер
   * будет запущен до того момента, пока что-то делает. Можно добавить "sleep 60" - будет активен в течении 60 сек после запуска
 ● docker start|restart|stop nginx – операции с контейнером, которые работают в режиме демона
+  * docker kill nginx - удалить работающий контейнер
 ● docker rm 9cbf7c3230d0 – удаление контейнера
   * указываем либо id, либо имя 
   * docker rm \$(docker ps -aq) --force//удалить все контейнеры (без слэша), --force - для удаления запущенных
@@ -1343,7 +1349,7 @@ VirtualBox. //обращение напрямую к сокетам (так же
 
 `Работа внутри контейнера`
 ● Не рекомендуется в реальной работе
-● Заходим: docker exec -ti nginx1 bash //если контейнер работает, то вместо "bash" - "sh"
+● Заходим: docker exec -it nginx1 bash //если контейнер работает, то вместо "bash" - "sh"
   * exec - запустить
   * -ti - терминал + интерактивный режим ()
   * nginx1 - контейнер
@@ -1507,6 +1513,8 @@ docker ps -a
 
 `Создание своих образов`
 
+[Пример от OTUS](https://github.com/OtusTeam/Spring/tree/master/2024-05/spring-31-docker)
+
 > Каждый образ (image) создается из `dockerfile`
 
 > Каждый образ состоит из слоев, каждый из которых представляет собой разницу между предыдущим и текущим (как в системах контроля версий)
@@ -1607,14 +1615,26 @@ curl localhost:8081
 
 * var/www/html/index.nginx-debian.html - файл в контейнере nginx, отвечающий за приветствие
 
+## Свой ОБРАЗ
+
+
 * Чтобы создать/`собрать образ` (создать образ):
 - docker build . -t cowsaytest:latest /home/vadim/create_dockerfile
-  * docker build -t cowsaytest . //если вместо пути точка - то dockerfile в текущей директории
+  * docker build -t cowsaytest:v1.0 . //если вместо пути точка - то dockerfile в текущей директории
   * cowsaytest:latest - тег для последующей заливки на DockerHub
   * -t терминал
   * . -из текущей папки
 
 > При сборке образа необходимо понимать, что слой выше не имеет доступа к изменениям слоя ниже! Все имзменения необходимо вносить на этом же уровне, например, через амперсант (&&)
+
+`Best Practices при сборке образа`:  
+* В контейнере только один запущенный процесс
+* Фоновые задачи (батчи) - отдельный контейнер
+* Логи - в stout, а уже докер их может класть куда хочет
+* БД - отдельный docker-контейнер
+* Параметры окружения передаются через переменные среды
+
+> Плагин для сборки образа в Maven: https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#quickstart
 
 * Чтобы переименовать образ:
 docker image tag cowsaytest1:latest cowsaytest:latest  
@@ -1630,6 +1650,7 @@ apt install openjdk-19-jre-headless
 javac Main.java
 java Main - запустить его
 
+## Docker Swarm
 
 `Docker Swarm` - средство для отказоустойчивости нашего приложения. //использует те же .yaml файлы, что и docker-compose
 Свойства Docker Swarm:

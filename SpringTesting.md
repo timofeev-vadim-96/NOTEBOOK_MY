@@ -345,3 +345,51 @@ assertThat(optionalActualStudent).isPresent().get()
 }
 }
 ```
+
+`отключить Spring Security` в тестах контроллеров:
+```java
+@WebMvcTest(
+        controllers = {BookController.class},
+        excludeAutoConfiguration = SecurityAutoConfiguration.class)
+
+//или так
+@SpringBootTest(classes = {BookController.class})
+@EnableAutoConfiguration(exclude = SecurityAutoConfiguration.class)
+@AutoConfigureMockMvc
+```
+
+## Тестирование внешних API (WireMock)
+
+`зависимость`
+```xml
+<dependency>
+    <groupId>org.wiremock</groupId>
+    <artifactId>wiremock-jetty12</artifactId>
+    <version>3.9.1</version>
+</dependency>
+```
+
+`Пример WireMock`:
+```java
+@SpringBootTest(properties = {"external.service.apiKey=XXX", "external.service.baseUrl=http://localhost:8090"})
+@WireMockTest(httpPort = 8888)
+public class TEST {
+    private String apiKey;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    void shouldSomethingToReply() throws JsonProcessingException {
+        String anotherQueryParam = "someAnotherParam";
+        Object expected = new Object();
+        //наш код
+
+        //подготовка ответа по заданному внешнему url для внутренних целей
+        var stub = stubFor(get(urlPathEqualTo("/data/2.5/externalService"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .withQueryParam("someAnotherParam", equalTo(anotherQueryParam))
+                .willReturn(okJson(objectMapper.writeValueAsString(expected))));
+    }
+}
+```
