@@ -334,6 +334,32 @@ JUnit 5:
 - Cobertura
 - Clover
 
+`JaCoCo`
+`JaCoCo (Java Code Coverage)` — это библиотека для измерения покрытия кода, широко используемая в Java проектах. Она интегрируется с инструментами сборки, такими как Maven или Gradle, и выводит отчеты по покрытию кода.
+
+`Зависимость`
+```xml
+<plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.8.5</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>prepare-agent</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>report</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
 ### Разработка через тестирование (TDD)
 
 Экстремальное программирование - Кент Бек (книга)
@@ -373,6 +399,13 @@ JUnit 5:
 3. Mock - крч. Создается общий интерфейс для реального рабочего класса и для таких вот моков. Мок реализует этот интерфейс и подключается куда надо. Обычно, моки создаются для проверки контракта между тестируемым кодом и зависимостями. Позволяет тесту **проверять вывод**. Например, взаимодействие с почтовым сервером.
 4. Fake - заменяет функциональность вызываемого компонента альтернативной реализацией. Например, обращаться не к БД, а к какой-то коллекции с данными.
 5. Spy (Шпион) - заглушки, записывающие некоторую инфу, в т.ч. о том, как они были вызываны. (должна быть ссылка на реальный объект). При этом, записывает все, что вызывает его. Используется в приложениях, распределенных по разным сервисам для записи порядка вызовов //редко используются
+
+`@SpyBean`  - для бутовых тестов  
+для стаббинга вместо when/then юзать doReturn
+```java
+doReturn(Page.empty()).when(criteriaDao).findAll(any(List.class), any(Pageable.class));
+```
+
 
 Фреймворки для моделирования тестовых зависимостей:
 * Mockito //top
@@ -754,3 +787,44 @@ public class MyTestClass
 ```java
 assertThrows(IllegalArgumentException.class, ()-> bookService.insert("someTitle", 1L, Set.of()));
 ```
+
+Проверка входящих аргументов `ArgumentCaptor`
+```java
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void makeTransaction(OperationType type, BigDecimal amount, BigDecimal expectedBalance) {
+        when(walletRepository.save(any(Wallet.class)))
+                .thenReturn(new Wallet(wallet.getId(), expectedBalance));
+        ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class);
+
+        WalletDto dto = walletService.makeTransaction(UUID.randomUUID(), type, amount);
+
+        assertThat(dto).isNotNull()
+                .hasFieldOrPropertyWithValue("balance", expectedBalance);
+        verify(walletRepository).save(walletCaptor.capture()); // Capture the Wallet argument
+        Wallet savedWallet = walletCaptor.getValue(); // Retrieve captured Wallet
+        assertEquals(expectedBalance, savedWallet.getBalance()); // Verify the balance is correct
+    }
+```
+
+`@Captor` — позволяет захватить аргументы, переданные в метод.
+```java
+///instance variable
+@Captor
+ArgumentCaptor<Email> emailCaptor;
+///local variable (method)
+Email emailCaptorValue = emailCaptor.getValue();
+///
+verify(platform).deliver(emailCaptor.capture());
+    Email value = emailCaptor.getValue();
+    assertThat(value.getFormat()).isEqualTo(Format.HTML);
+
+```
+
+---
+
+`TestNG`
+TestNG — это более гибкий фреймворк, который предоставляет дополнительные возможности, такие как зависимые тесты, параллельное выполнение и параметризация. Это делает TestNG полезным для более сложных сценариев тестирования, таких как интеграционные и системные тесты.
+
+Аннотации TestNG: TestNG имеет аналогичные JUnit аннотации, такие как @Test, @BeforeMethod, но также поддерживает такие возможности, как зависимости между тестами (dependsOnMethods).
+Конфигурация и параллельное выполнение: С помощью TestNG можно настроить выполнение тестов в несколько потоков, что повышает скорость тестирования.

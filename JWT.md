@@ -6,9 +6,14 @@
 
 > учим: https://struchkov.dev/blog/ru/what-is-jwt/
 
+`JWT`
+ https://www.youtube.com/watch?v=EjrlN_OQVDQ 
+ https://www.youtube.com/watch?v=mUq9MGe5vZA 
+ https://www.youtube.com/watch?v=oeni_9g7too
+
 > [Работающий конфиг JWT-аутентификации в+ Spring Security](https://github.com/timofeev-vadim-96/jwt-auth.git)
 
-[Пример от OTUS](https://github.com/OtusTeam/Spring/blob/master/2024-05/spring-25-SS-auth/jwt/src/main/java/ru/otus/security/jwt/controller/TokenController.java) - для приложения, генерирующего токены самостоятельно
+[Пример от OTUS](https://github.com/OtusTeam/Spring/blob/master/2024-05/spring-23-SS-auth/jwt/src/main/java/ru/otus/security/jwt/controller/TokenController.java) - для приложения, генерирующего токены самостоятельно
 
 `зависимость` - для генерации jwt-токенов  
 ```xml

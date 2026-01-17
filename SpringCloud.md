@@ -78,6 +78,10 @@
 > Все зарегистрированные в Eureka сервисы-клиенты можно найти по адресу: 
 localhost:8761/eureka/apps, 8761 - default port  - JSON-версия    
 http://localhost:8761/  - UI
+  * параметры в UI
+    * `Renews(last min)` - 6 количество полученных подтверждений о статусе UP от приложений. По дефолту раз в 30sec, так что значение будет = количество приложений * 2
+    * `Renews threshold` - пороговое значение ответов от клиентских приложений. Если (Renews threshold < Renews(last min)), то какие-то проблемы с сетью между клиентским приложением и Eureka-сервером
+      * Renews threshold = timeout (по дефолту 30sec) * eureka.server.renewal-percent-threshold/количество приложений
 
 Зависимость `Eureka-СЕРВЕР`:  
 ```xml
@@ -98,10 +102,17 @@ http://localhost:8761/  - UI
 server:
   port: 8761
 eureka:
+  server: 
+  # для расчета Renews threshold (на UI эврики). default = 0.75
+    renewal-percent-threshold: 0.5
   instance:
     hostname: localhost
+    #через сколько забыть приложение после потери с ним сети
+    lease-expiration-duration-in-seconds: 90
   client:
+  #регистрировать ли данное приложение в Eureka-server в качестве клиента
     register-with-eureka: false
+    #получать ли данные о приложениях, зарегистрированных в Eureka. Для Eureka-сервера не нужно крч.
     fetch-registry: false
     service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
@@ -138,11 +149,16 @@ spring:
     name: issue-service ## как будет называться приложение в регистре Eureka
 eureka:
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone : http://localhost:8761/eureka/
+  instance:
+    # как часто отправлять данные о себе на Eureka-сервер
+    lease-renewal-interval-in-seconds: 30
 ```
 
-Получить `ip-адрес и порт` EUREKA-клиента:  
+Получить `ip-адрес и порт` EUREKA-клиента (1 способ):  
 ```java
     private String getBookServiceIp(){
         Application application = eurekaClient.getApplication("BOOK-SERVICE");
@@ -152,6 +168,13 @@ eureka:
         InstanceInfo randomInstance = instanceInfos.get(random.nextInt(instanceInfos.size()));
         return "http://" + randomInstance.getIPAddr() + ":" + randomInstance.getPort();
     }
+```
+
+Получить `ip-адрес и порт` EUREKA-клиента (2 способ):  
+```java
+private final EurekaClient discoveryClient; //бин заинжектится
+//
+var clientInfo = discoveryClient.getNextServerFromEureka("SERVICE-CLIENT-INFO", false);
 ```
 
 ---
@@ -414,3 +437,122 @@ hystrix:
 ```
 
    В этом примере определены два маршрута: users-route и orders-route. Запросы, начинающиеся с /users/, будут направляться на микросервис "users-service", а запросы, начинающиеся с /orders/, будут направляться на микросервис "orders-service".
+
+### Spring Cloud Трассировка / Spring Cloud Sleuth
+
+- проект больше не поддерживается командой Spring. Новая замена: `Micrometer Tracing`
+
+Observability - способность наблюдать за поведением/изменением внутреннего состояния приложения.
+
+`Виды обсервабилити`:
+1. логи
+2. метрики
+3. трассировка
+
+`Трассировка` - это пусть, по которому запрос проходил через систему. Зачем нужно? Вычихлить, где и какие запросы работают медленно
+
+`Zipkin` - система для распределенной трассировки
+
+`Docker для Zipkin`
+```bash
+docker run -d -p 9411:9411 openzipkin/zipkin
+```
+
+`Зависимости`
+```xml
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>1.3.5</version>
+</dependency>
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-exporter-zipkin</artifactId>
+    <version>1.43.0</version>
+</dependency>
+```
+
+Конфиг трассировки
+```yml
+management:
+  tracing:
+    sampling:
+      probability: 1.0 #какой процент трассировок сохранять. Здесь 100%, в реале 
+```
+
+### Spring Cloud Circuit Breaker
+
+`Зависимость`
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+    <version>3.1.2</version>
+</dependency>
+```
+
+[Пример OTUS](https://github.com/petrelevich/jvm-digging/blob/main/spring-cloud/service-client/src/main/java/ru/demo/controller/ClientController.java)
+
+- раньше использовался **Netflix Hystrix**
+- интегрируется с несколькими библиотеками. Основная: `Resilience4J`
+
+`Resilience4J` - предоставляет разные функции обеспечения устойчивости приложения. Основная идея - если отваливаетя один из микросервисов, изолировать его и не давать отправлять в него HTTP-запросы.
+  * реализует паттерны Circuit Breaker, Rate Limiter, Retry, Bulkhead
+
+[Resilience4j через Аннотации Habr](https://habr.com/ru/articles/793550/)
+
+Элементы Resilience4J:
+  * circuitBreaker - ограничитель времени на ответ от внешних сервисов
+  * rateLimiter - ограничитель запросов в единицу времени
+
+java-конфиг Resilience4J
+```java
+    @Bean
+    public RateLimiterConfig rateLimiterConfig() {
+        return RateLimiterConfig.custom()
+                .timeoutDuration(Duration.ofMillis(100)) //точность измерения временного окна, относительно времени текущего запроса - limitRefreshPeriod
+                .limitForPeriod(1) //сколько запросов можно отправить 
+                .limitRefreshPeriod(Duration.ofSeconds(30)) //в этот интервал времени
+                .build();
+    }
+
+    @Bean
+    public RateLimiter rateLimiter(RateLimiterConfig config) {
+        return RateLimiter.of("defaultRateLimiter", config);
+    }
+
+//фабрика circuitBreaker
+    @Bean
+    public Customizer<Resilience4JCircuitBreakerFactory> defaultCustomizer() {
+        return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
+        //настройка, при которой если приложение, к которому мы обращаемся, не отвечает в течении 5 секунд, то изолировать его и более не ждать ответа
+                .timeLimiterConfig(TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(5)).build())
+                .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
+                .build());
+    }
+
+//создание дефолтного circuitBreaker
+    @Bean
+    public CircuitBreaker circuitBreaker(CircuitBreakerFactory<?,?> circuitBreakerFactory) {
+        return circuitBreakerFactory.create("defaultCircuitBreaker");
+    }
+```
+
+`Как это работает`. Обернуть нужный функционал в circuitBreaker. Пример:
+```java
+private final CheckedFunction<String, String> getAdditionalInfoFunction;
+//
+//конструктор класса, в котором применяется
+    public ClientController(
+                            CircuitBreaker circuitBreaker,
+                            RateLimiter rateLimiter) {
+
+        this.getAdditionalInfoFunction = RateLimiter.decorateCheckedFunction(rateLimiter,
+                name -> circuitBreaker.run(() -> getAdditionalInfo(name),
+                        t -> {
+                            log.error("delay call failed error:{}", t.getMessage());
+                            //что возвращать, если время обращения к другому сервису истекло, и мы его считаем изолированным с помощью circuitBreaker 
+                            return "unknown info";
+                        }));
+    }
+```

@@ -99,7 +99,7 @@ TABLE
 
 ПРО КАСКАДНЫЕ ИЗМЕНЕНИЯ (CascadeType) https://javarush.com/quests/lectures/questhibernate.level13.lecture05
 
-@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) //связь поля с нескольким полями в др. табл. user - свойство в классе Auto (соотношение по классам, а не по таблицам). orphanRemoval = true - удалять все связные объекты при удалении этого.
+@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) //связь поля с нескольким полями в др. табл. user - свойство в классе Auto (соотношение по классам, а не по таблицам). orphanRemoval = true - удалять все связные объекты, если они удалены из коллекции родительской сущности)
 
 @ManyToOne(fetch = FetchType.LAZY) //отношение свойства класса многие:1 - другому классу. Lazy - чтобы не вытащить вместе с объектом кучу других зависимостей по цепочке до бесконечности. Если обратимся к полю, которое не вытащилось из БД - хибернейт его сам дотянет. (в момент открытой СЕССИИ (Персистентности))
 

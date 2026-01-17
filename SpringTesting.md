@@ -222,6 +222,22 @@ public class WebSecurityTestConfig {
 3. logging.level.org.springframework.test.context.cache=debug - больше инфы про кэшируемые бины
 4. сделай общий абстрактный класс со всеми аннотациями
 
+Настроить конкретную конфигурацию для контекста без поднятия всего
+```java
+@RunWith(SpringJUnit4ClassRunner.class) //@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {TestConfig.class})
+public class CustomContextTest {
+
+    @Autowired
+    private CustomService customService;
+
+    @Test
+    public void customServiceTest() {
+        assertEquals("Expected Value", customService.getSomeValue());
+    }
+}
+```
+
 
 `@DataJpaTest` - сканирует вверх в поиске SpringBootConfiguration, а позже вниз ищет все бины @Reposiroty
 
@@ -360,6 +376,8 @@ assertThat(optionalActualStudent).isPresent().get()
 
 ## Тестирование внешних API (WireMock)
 
+  * умеет в реактивщину. Может генерить ответный поток Flux<...>
+
 `зависимость`
 ```xml
 <dependency>
@@ -393,3 +411,193 @@ public class TEST {
     }
 }
 ```
+
+
+## Spring Web Flux тестирование
+
+> в тестах МОЖНО использовать блокирующие вызовы
+
+[Пример OTUS](https://github.com/OtusTeam/Spring/blob/master/2024-05/spring-40-webflux/src/test/java/ru/otus/spring/rest/AnnotatedControllerTest.java)
+
+Пример кода реактивного тестирования
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class AnnotatedControllerTest {
+
+    @Autowired
+    private WebTestClient webTestClient;
+    @LocalServerPort
+    private int port;
+
+
+    @Test
+    void oneTest() {
+        //given
+        var client = WebClient.create(String.format("http://localhost:%d", port));
+
+        //when
+        var result = client
+                .get().uri("/flux/one")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(3))
+                .block();
+
+        //then
+        assertThat(result).isEqualTo("one");
+    }
+
+    @Test
+    void streamTest() {
+        //given
+        var client = WebClient.create(String.format("http://localhost:%d", port));
+        var expectedSize = 5;
+
+        //when
+        List<String> result = client
+                .get().uri("/stream")
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .retrieve()
+                .bodyToFlux(String.class)
+                .take(expectedSize) //т.к. тут Stream, ждем 5 элементов, и отключае связь
+                .timeout(Duration.ofSeconds(3))
+                .collectList() //Mono<List<...>>
+                .block();
+
+        //then
+        assertThat(result).hasSize(expectedSize)
+                .contains(String.format("valStr:%s", 0),
+                        String.format("valStr:%s", 1),
+                        String.format("valStr:%s", 2),
+                        String.format("valStr:%s", 3),
+                        String.format("valStr:%s", 4));
+    }
+
+//Проверить результат с помощью StepVerifier
+        @Test
+    void dataTest() {
+        //given
+        var webTestClientForTest = webTestClient.mutate()
+                .responseTimeout(Duration.ofSeconds(20))
+                .build();
+
+        //when
+        //ОБРАЩАЮ ВНИМАНИЕ. БЕЗ БЛОКИРОВКИ. Юзаем ниже StepVerifier
+        var result = webTestClientForTest
+                .get().uri("/flux/ten")
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(Integer.class)
+                .getResponseBody();
+
+        //then
+        //здесь подписываемся на поток
+        var step = StepVerifier.create(result);
+        StepVerifier.Step<Integer> stepResult = null;
+
+        //говорим: получить следующий элемент. и так 10 раз. После этого поток должен закрыться. Мы ожидаем именно 10 элементов
+        for (var idx = 1; idx <= 10; idx++) {
+            stepResult = step.expectNext(idx);
+        }
+        //проверяем закрыт ли поток
+        stepResult.verifyComplete();
+    }
+}
+```
+
+Тестирование `функциональных эндпоинтов WebFlux`
+```java
+@SpringBootTest
+class PersonControllerTest {
+
+    @Autowired
+    private RouterFunction<ServerResponse> route;
+
+    @Test
+    void testRoute() {
+        WebTestClient client = WebTestClient
+                .bindToRouterFunction(route)
+                .build();
+
+        client.get()
+                .uri("/func/person")
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+}
+```
+
+Проверка с какими аргументами вызвали мок:
+```java
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void makeTransaction(OperationType type, BigDecimal amount, BigDecimal expectedBalance) {
+        when(walletRepository.save(any(Wallet.class)))
+                .thenReturn(new Wallet(wallet.getId(), expectedBalance));
+        ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class); //отлавливатель аргов
+
+        WalletDto dto = walletService.makeTransaction(UUID.randomUUID(), type, amount);
+
+        assertThat(dto).isNotNull()
+                .hasFieldOrPropertyWithValue("balance", expectedBalance);
+        verify(walletRepository).save(walletCaptor.capture()); // Capture the Wallet argument
+        Wallet savedWallet = walletCaptor.getValue(); // Retrieve captured Wallet
+        assertEquals(expectedBalance, savedWallet.getBalance()); // Verify the balance is correct
+    }
+```
+
+`Проверка вызова метода с аргументами:`
+Используйте verify() для проверки вызова метода с определенными аргументами.
+
+```java
+verify(mockedObject).performActionWithArgument(eq("expectedValue"));
+```
+
+`@Sql`
+Создание тестовых данных:
+
+Если вы хотите инициализировать базу данных с тестовыми данными, вы можете использовать SQL-скрипты. Создайте файл src/test/resources/test-data.sql и добавьте в него необходимые команды SQL:
+```sql
+INSERT INTO user (id, name) VALUES (1, 'Test User');
+```
+Запуск тестов с инициализацией данных:
+
+Вы можете использовать аннотацию @Sql в тестовом классе для выполнения скриптов инициализации данных перед тестами.
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.jdbc.Sql;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJpaTest
+public class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    @Sql(scripts = "/test-data.sql")
+    public void testFindUserById() {
+        User user = userRepository.findById(1L).orElse(null);
+        assertThat(user).isNotNull();
+        assertThat(user.getName()).isEqualTo("Test User");
+    }
+}
+```
+
+Для `анализа сложности кода, времени выполнения тестов и покрытия`: J-Metr, SonarQube
+
+Включить `параллельное тестирование в JUnit` (по дефолту)
+
+В JUnit 5 вы можете включить параллельное тестирование, добавив следующую конфигурацию в файл **junit-platform.properties**:
+```yml
+junit.jupiter.execution.parallel.enabled = true
+junit.jupiter.execution.parallel.config.strategy = dynamic
+#Кроме того, вы можете настроить максимальное количество потоков для выполнения тестов:
+junit.jupiter.execution.parallel.config.fixed.parallelism = 4
+```yml

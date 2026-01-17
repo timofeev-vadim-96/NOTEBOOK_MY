@@ -15,6 +15,13 @@ Mongo, Cassandra, Redis
 3. Graph (граф-ориентированные)
 4. Document (документо-ориентированные)
 
+```java
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
 ---
 
 ### Key-Value  (Redis)

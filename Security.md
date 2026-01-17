@@ -6,6 +6,11 @@
 
 `Spring Security` - огромный модуль в Spring с перечнем инструментами для устранения уязвимостей  
 
+`JWT`
+ https://www.youtube.com/watch?v=EjrlN_OQVDQ 
+ https://www.youtube.com/watch?v=mUq9MGe5vZA 
+ https://www.youtube.com/watch?v=oeni_9g7too
+
 Пример конфига от OTUS (базовый): https://github.com/OtusTeam/Spring/blob/master/2024-03/spring-23/3.x-style/src/main/java/ru/otus/spring/security/SecurityConfiguration.java  
 Пример простого конфига (свой):   
 https://github.com/timofeev-vadim-96/library-api
@@ -76,16 +81,39 @@ getContext().setAuthentication(...)
 * Кстати достать можно в Spring MVC контроллере:
 SecurityContextHolder.getContext().getAuthentication()
 
-`Фильтры` Spring Security:  
-* ForceEagerSessionFilter
-* ChannelProcessingFilter
-* SecurityContextPersistenceFilter
+> Про цепочку фильтров https://stackoverflow.com/questions/41480102/how-spring-security-filter-chain-works
+
+`Порядок фильтров (фильтры)` Spring Security:  
+* ChannelProcessingFilter - проверяет, был ли запрос выполнен по защищённому каналу (например, HTTPS).
+* `SecurityContextPersistenceFilter`. Этот фильтр восстанавливает SecurityContext между запросами. В SecurityContext хранится информация о текущем пользователе, и его состояние сохраняется, например, в сессии или в заголовках запросов. Фильтр восстанавливает контекст при каждом запросе и сохраняет его снова после завершения обработки.
+* HeaderWriterFilter - добавляет заголовки безопасности к ответам.
+* LogoutFilter - обрабатывает запросы на выход из системы.
 * CorsFilter, CsrfFilter
-* Фильтр(ы) первичной аутентификации
-* Фильтр(ы) вторичной аутентификации
-* SessionManagementFilter
-* ExceptionTranslationFilter
+* `UsernamePasswordAuthenticationFilter`: Обрабатывает аутентификацию через форму логина. Этот фильтр отвечает за получение учетных данных пользователя (имя пользователя и пароль), проверяет их и аутентифицирует пользователя через AuthenticationManager.
+* BasicAuthenticationFilter: Обрабатывает HTTP Basic Authentication, где имя пользователя и пароль передаются в заголовке Authorization. Этот фильтр проверяет, что пользователь передал корректные данные, и выполняет аутентификацию.
+* RequestCacheAwareFilter - сохраняет и восстанавливает запрашиваемые URL для перенаправления после аутентификации.
+* SecurityContextHolderAwareRequestFilter - позволяет получить доступ к объекту SecurityContext в контексте запроса
+* AnonymousAuthenticationFilter - создает анонимного пользователя, если пользователь не аутентифицирован.
+* SessionManagementFilter - управляет сессиями, например, предотвращает одновременные сессии.
 * AuthorizationFilter //отвечает за авторизацию по URL
+* `ExceptionTranslationFilter`: Обрабатывает любые исключения, которые возникают в процессе фильтрации или аутентификации. Например, если доступ запрещен, этот фильтр может отправить перенаправление на страницу логина или вернуть HTTP-ответ с ошибкой (например, 403 Forbidden).
+* `FilterSecurityInterceptor`: Фильтр, который выполняет авторизацию, проверяя, имеет ли текущий пользователь права доступа к запрашиваемому ресурсу. Он использует конфигурации безопасности, заданные для приложения, чтобы определить, разрешено ли выполнение текущей операции для аутентифицированного пользователя.
+
+`Куда вставлять кастомный фильтр:`
+* Аутентификация (Authentication):
+Если ваш кастомный фильтр отвечает за процесс аутентификации (например, проверка токена, кастомная логика аутентификации), то часто логично вставить его перед стандартным UsernamePasswordAuthenticationFilter.
+
+* Авторизация (Authorization):
+Если ваш фильтр связан с авторизацией, то его место может быть перед FilterSecurityInterceptor, который обычно отвечает за принятие решения о доступе на основе правил конфигурации безопасности.
+
+* Другое
+Если ваш фильтр выполняет какую-то другую функциональность (например, обработка специфических HTTP-заголовков, логгирование, обработка специфических типов запросов), то вставьте его перед фильтрами, которые имеют отношение к этой функциональности.
+
+Для отладки и просмотра порядка фильтров, а также логирования запросов в Spring Security, вы можете воспользоваться следующими методами:
+
+Логирование с использованием Logback или Log4j:
+
+Настройте вашу систему логирования для вывода информации о фильтрах и запросах. В Spring Security многие компоненты логируют свою деятельность. Например, уровень логирования DEBUG для пакета org.springframework.security может предоставить вам детальную информацию о том, как обрабатываются запросы.
 
 Как Spring Security встраивает свои фильтры в общую цепочку фильтров:  
 ![](images/spring_filter_chain.png)  
@@ -984,4 +1012,119 @@ ADD FOREIGN KEY (owner_sid) REFERENCES acl_sid (id);
  Customer customer) {
  ...
  }
+```
+
+
+## Основые классы Spring Security
+
+`AuthenticationManager`
+
+Интерфейс, который определяет контракт для объектов, ответственных за аутентификацию пользователя.
+Его основной метод — authenticate(), который проверяет предоставленные учетные данные.
+Обычно в Spring используется его стандартная реализация — ProviderManager.
+public interface AuthenticationManager {
+    Authentication authenticate(Authentication authentication) throws AuthenticationException;
+}
+
+* `Authentication`
+
+Представляет собой объект, содержащий информацию об аутентификации пользователя, включая его учетные данные и полномочия.
+Основные свойства:
+principal (пользователь или субъект аутентификации),
+credentials (пароль или токен),
+authorities (список ролей или прав пользователя).
+* `UserDetails` и `UserDetailsService`
+
+Интерфейс UserDetails определяет контракт для объектов, представляющих пользователя в системе.
+Интерфейс UserDetailsService используется для получения объекта UserDetails на основе имени пользователя.
+Пример метода в UserDetailsService:
+
+```java
+public interface UserDetailsService {
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}
+```
+
+`AuthenticationProvider`
+
+Интерфейс для реализации разных механизмов аутентификации. Например, аутентификация на основе пароля, токена или сертификатов.
+Реализация должна переопределить метод authenticate(), который пытается аутентифицировать пользователя.
+Пример:
+
+```java
+public interface AuthenticationProvider {
+    Authentication authenticate(Authentication authentication) throws AuthenticationException;
+    boolean supports(Class<?> authentication);
+}
+```
+
+`UsernamePasswordAuthenticationFilter`
+
+Один из ключевых фильтров, который обрабатывает форму логина на основе имени пользователя и пароля.
+Фильтр перехватывает запросы аутентификации и передает их в AuthenticationManager для проверки.
+SecurityContext и SecurityContextHolder
+
+SecurityContext хранит информацию о текущей аутентификации (текущий Authentication объект).
+SecurityContextHolder — это вспомогательный класс, который предоставляет доступ к SecurityContext в любом месте приложения.
+Пример получения текущего пользователя:
+
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+
+
+## Oauth 2.0 и OpenID Connect от JavaCode
+
+Как реализовать и использовать Spring Security для внедрения OAuth 2.0 и OpenID Connect для обеспечения безопасности в микросервисной архитектуре?
+
+Аутентификация через OpenID Connect
+Для аутентификации пользователей вы можете использовать OpenID Connect. Микросервис, который отвечает за аутентификацию пользователей (например, API Gateway или Authentication Service), будет действовать как OAuth 2.0 Client.
+
+Пример настройки аутентификации через OpenID Connect:
+Добавьте зависимости для OAuth 2.0 Client:
+
+`Зависимость`
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+
+```
+
+`КЛИЕНТ`
+```yml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak: //google //github
+            client-id: your-client-id
+            client-secret: your-client-secret
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          //
+```
+
+FilterChain КЛИЕНТ
+```java
+@Bean  
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {  
+			// Ваша логика
+            .oauth2Login(oauth2Login -> oauth2Login  
+                    .loginPage("/") // Указываем страницу для входа  
+                    .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint  
+                            .userService(socialAppService))  
+                    .defaultSuccessUrl("/user")  
+            )  
+            .logout(logout -> logout  
+                    .logoutUrl("/logout") // URL для выхода  
+                    .logoutSuccessHandler(oidcLogoutSuccessHandler()) // Обработчик для логаута  
+                    .invalidateHttpSession(true)  
+                    .deleteCookies("JSESSIONID")  
+            );  
+    return http.build();  
+}
 ```

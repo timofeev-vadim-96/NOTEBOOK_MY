@@ -1406,7 +1406,7 @@ values = (T []) new Object[values.length + 1];
 У интерфейса по умолчанию все public! Менять не надо. 
 * Может содержать только неизменяемые переменные.  
 * Интерфейс без методов - маркерный интерфейс
-* Интерфейс с одним абстрактным методом - функциональный интерфейс. Помечается аннотацией @FunctionalInterface для того, чтобы другие разработчики не вносили в него дополнительные методы.
+* Интерфейс с одним абстрактным методом - функциональный интерфейс. Помечается аннотацией @FunctionalInterface для того, чтобы другие разработчики не вносили в него дополнительные АБСТРАКТНЫЕ методы.
 
 *и так - если мы **имплементируем** интерфейс, то обязаны! переопределить методы, которые в нем находятся (как в абстрактном классе)  
 public class Foo extends Hero implements Healer, Warrior{}  
@@ -2590,10 +2590,67 @@ Map<Long, Genre> genresMap = genres.stream()
                 .toMap(Genre::getId, Function.identity()));
 ```
 
+`BigDecimal` предоставляет множество методов для работы с числами произвольной точности. Вот основные из них, сгруппированные по функциональности:
+
+Арифметические операции:
+
+* `add(BigDecimal)`: Сложение.
+* `subtract(BigDecimal)`: Вычитание.
+* `multiply(BigDecimal)`: Умножение.
+* `divide(BigDecimal, RoundingMode)`: Деление. *Важно:* Требует указания `RoundingMode` для обработки потенциальных бесконечных десятичных дробей.
+* `divide(BigDecimal, int, RoundingMode)`: Деление с указанием масштаба и `RoundingMode`.
+* `remainder(BigDecimal)`: Остаток от деления.
+* `pow(int)`: Возведение в целую степень.
+* `abs()`: Модуль (абсолютное значение).
+* `negate()`: Изменение знака.
+* `plus()`: Возвращает тот же `BigDecimal`.
+* `signum()`: Возвращает -1, 0 или 1, в зависимости от знака числа.
 
 
+Сравнение:
+
+* `compareTo(BigDecimal)`: Сравнение двух `BigDecimal`. Возвращает -1, 0 или 1.
+* `equals(Object)`: Проверяет равенство значений *и* масштаба. `1.0` и `1.00` *не* равны!
+* `doubleValue()`: Преобразование в `double`. *Внимание:* Возможна потеря точности.
+* `intValue()`: Преобразование в `int`. *Внимание:* Возможна потеря точности.
+* `longValue()`: Преобразование в `long`. *Внимание:* Возможна потеря точности.
+* `floatValue()`: Преобразование в `float`. *Внимание:* Возможна потеря точности.
 
 
+Округление и масштабирование:
+
+* `setScale(int, RoundingMode)`: Устанавливает масштаб (количество знаков после запятой) с указанием `RoundingMode`.
+* `setScale(int)`: Устанавливает масштаб, используя режим округления по умолчанию.
+* `round(MathContext)`: Округляет число, используя указанный `MathContext`.
+* `stripTrailingZeros()`: Удаляет незначащие нули после запятой.
+
+
+Создание `BigDecimal`:
+
+* `BigDecimal(String)`: Рекомендуемый способ создания `BigDecimal` из строки. Избегает проблем с точностью, присущих `double` и `float`.
+* `BigDecimal(double)`: Создает `BigDecimal` из `double`. *Внимание:* Может привести к неожиданным результатам из-за особенностей представления `double`.
+* `BigDecimal(int)`: Создает `BigDecimal` из `int`.
+* `BigDecimal(long)`: Создает `BigDecimal` из `long`.
+
+
+Другие полезные методы:
+
+* `min(BigDecimal)`: Возвращает минимальное из двух `BigDecimal`.
+* `max(BigDecimal)`: Возвращает максимальное из двух `BigDecimal`.
+* `toPlainString()`: Возвращает строковое представление числа без экспоненциальной записи.
+* `toEngineeringString()`: Возвращает строковое представление числа в инженерной нотации (если необходимо).
+* `unscaledValue()`: Возвращает не масштабированное значение в виде `BigInteger`.
+* `scale()`: Возвращает масштаб числа.
+
+
+Создать стрим из файла
+```java
+        try (Stream<String> stream = Files.lines(Paths.get("example.txt"))) { // Создаем стрим из строк файла
+            stream.forEach(System.out::println); // Выводим строки файла
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+```
 
 
 
@@ -2606,22 +2663,19 @@ Map<Long, Genre> genresMap = genres.stream()
 
 ---
 **Полезные ссылки:**  
-1. канал для изучения JAVA - https://www.youtube.com/channel/UCK5d3n3kfkzlArMccS0TTXA
-2. статья о LinkedList - https://habr.com/ru/articles/337558/ 
-
 > как собрать проект с зависимостями в Intelliage Idea 
 https://yandex.ru/video/preview/5410863555101948769
 
 > как изменить тип проекта из обычного в Maven
 https://skillbox.ru/media/base/kak-iz-obychnogo-ideaproekta-sdelat-maven/
 
-> лицензии для Intellia Idea
-https://github.com/superbeyone/JetBrainsActiveCode/blob/master/licenses/2023/2023-12-22.md
+конфиг логгера по дефолту в Spring Boot
+https://www.baeldung.com/spring-boot-logging
+https://docs.spring.io/spring-boot/reference/features/logging.html#features.logging.log-levels
+
+http->https
+https://www.baeldung.com/spring-boot-https-self-signed-certificate
 
 
-**Проекты**
-1. Достаточно полное консольное приложение для работы с реестром животных - в папке по контрольной работе по 
-блоку программист  (здесь работа с входящими данными, их обработка, работа в ресурсном трае (например класс счетчик
-с имплементацией AutoCloseable)),реализована работа с **json**-серриализацией и дессериализацией. Также, реализована проверка на сохранение данных в БД.
-Кроме этого, достаточно полный конфиг ((pom.xml-файла)).
-2. Немного про связь с удаленной БД MySql
+
+

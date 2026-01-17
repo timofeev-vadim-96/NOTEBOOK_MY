@@ -1,3 +1,20 @@
+```yml
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: fitness_tracker
+    ports:
+      - "6666:5432" #слева - любой порт на машине. справа - обязательно 5432
+    environment:
+      POSTGRES_DB: fitness
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - ./config/postgres-data:/var/lib/postgresql/data
+```
+
 `Создать БД если не существует`
 ```java
         try {
